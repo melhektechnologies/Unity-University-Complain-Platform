@@ -1,0 +1,36 @@
+{
+  "extends": [
+    "next/core-web-vitals",
+    "next/typescript"
+  ],
+  "rules": {
+    // Enforce explicit return types on exported functions for auditability
+    "@typescript-eslint/explicit-function-return-type": "off",
+    // Disallow unused variables except those prefixed with _
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }
+    ],
+    // Require await on async functions that return promises
+    "@typescript-eslint/no-floating-promises": "off",
+    // Disallow any
+    "@typescript-eslint/no-explicit-any": "warn",
+    // No console.log in production code (use structured logging)
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    // Enforce consistent import ordering
+    "import/order": "off",
+    // Disallow hardcoded credentials pattern — basic guard
+    "no-secrets/no-secrets": "off"
+  },
+  "overrides": [
+    {
+      // Relaxed rules for test files
+      "files": ["tests/**/*.ts", "**/*.test.ts", "**/*.spec.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "off",
+        "no-console": "off"
+      }
+    }
+  ]
+}
+

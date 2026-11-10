@@ -1,0 +1,220 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CSS Custom Properties — shadcn/ui + Institutional Design System
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@layer base {
+  :root {
+    /* ── shadcn/ui semantic tokens (light mode) ─────────────────────────── */
+    --background: 210 40% 98%;       /* slate-50  #F8FAFC */
+    --foreground: 222 47% 11%;       /* slate-900 #0F172A */
+
+    --card: 0 0% 100%;               /* white */
+    --card-foreground: 222 47% 11%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    /* Primary = institutional navy */
+    --primary: 213 55% 24%;          /* #1B365D */
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary = light slate */
+    --secondary: 210 40% 96%;        /* slate-100 */
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 210 40% 96%;
+    --muted-foreground: 215 20% 45%; /* slate-500 */
+
+    /* Accent = institutional teal */
+    --accent: 180 100% 25%;          /* #008080 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 86% 61%;        /* red-500 */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 32% 91%;           /* slate-200 */
+    --input: 214 32% 91%;
+    --ring: 213 55% 24%;             /* navy for focus rings */
+
+    --radius: 0.5rem;
+
+    /* ── Institutional custom tokens ────────────────────────────────────── */
+    --navy: 213 55% 24%;
+    --navy-hover: 213 55% 32%;
+    --teal: 180 100% 25%;
+    --teal-hover: 174 72% 32%;
+  }
+
+  /* ── Base element styles ──────────────────────────────────────────────── */
+  * {
+    @apply border-border;
+  }
+
+  html {
+    /* Smooth scrolling for anchor navigation */
+    scroll-behavior: smooth;
+    /* Prevent font size inflation on mobile */
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* ── Focus visible styles — WCAG 2.1 AA compliance ─────────────────────── */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Remove default focus ring (replaced by :focus-visible above) */
+  :focus:not(:focus-visible) {
+    @apply outline-none;
+  }
+
+  /* ── Headings ──────────────────────────────────────────────────────────── */
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tight;
+  }
+
+  /* ── Form elements base ─────────────────────────────────────────────────── */
+  input, textarea, select {
+    @apply text-base;  /* Prevent iOS zoom on input focus (min 16px) */
+  }
+
+  /* ── Reduced motion support ────────────────────────────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Component Layer — Reusable institutional patterns
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@layer components {
+  /* ── Skip-to-content link (accessibility) ──────────────────────────────── */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4;
+    @apply bg-primary text-primary-foreground px-4 py-2 rounded-md font-medium text-sm;
+  }
+
+  /* ── Institutional page header ──────────────────────────────────────────── */
+  .page-header {
+    @apply bg-white border-b border-border sticky top-0 z-40;
+  }
+
+  /* ── Content width constraint ───────────────────────────────────────────── */
+  .content-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .content-container-narrow {
+    @apply max-w-3xl mx-auto px-4 sm:px-6;
+  }
+
+  /* ── Card patterns ──────────────────────────────────────────────────────── */
+  .card-elevated {
+    @apply bg-white rounded-lg border border-border shadow-sm;
+  }
+
+  .card-flat {
+    @apply bg-white rounded-lg border border-border;
+  }
+
+  /* ── Form section ───────────────────────────────────────────────────────── */
+  .form-section {
+    @apply space-y-6 pb-6 border-b border-border last:border-0 last:pb-0;
+  }
+
+  /* ── Tracking reference display ─────────────────────────────────────────── */
+  .tracking-ref {
+    @apply font-mono text-lg font-semibold tracking-widest text-institutional-navy;
+    letter-spacing: 0.15em;
+  }
+
+  /* ── Status badge base (extended per status) ────────────────────────────── */
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium;
+    @apply border;
+  }
+
+  /* ── Internal note indicator ────────────────────────────────────────────── */
+  .internal-note {
+    @apply bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-md;
+  }
+
+  /* ── Sensitive complaint indicator ─────────────────────────────────────── */
+  .sensitive-indicator {
+    @apply bg-red-50 border border-red-200 rounded-md px-3 py-2 text-sm text-red-700;
+    @apply flex items-center gap-2;
+  }
+
+  /* ── Loading skeleton ───────────────────────────────────────────────────── */
+  .skeleton {
+    @apply animate-pulse bg-muted rounded;
+  }
+
+  /* ── Print styles for credential page ──────────────────────────────────── */
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+    .print-only {
+      display: block !important;
+    }
+    body {
+      background: white;
+      color: black;
+    }
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Utility Layer
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@layer utilities {
+  /* Screen-reader-only text */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+
+  /* Visually indicate required form fields */
+  .required-mark::after {
+    content: ' *';
+    @apply text-destructive;
+  }
+
+  /* Truncate with ellipsis at specified lines */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
