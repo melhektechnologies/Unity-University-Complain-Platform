@@ -43,16 +43,16 @@ export default function ConfirmationPage() {
 
   if (!creds) {
     return (
-      <div className="flex items-center justify-center min-h-[200px] text-slate-400 text-sm">
+        <div role="status" className="flex min-h-[200px] items-center justify-center text-sm text-muted-foreground">
         Loading…
       </div>
     );
   }
 
   return (
-    <div className="space-y-6 max-w-lg mx-auto">
+    <div className="mx-auto max-w-2xl space-y-6 sm:space-y-7">
       {/* Success banner */}
-      <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+      <div role="status" className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
         <CheckCircle className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-emerald-800">Complaint submitted successfully</p>
@@ -84,13 +84,14 @@ export default function ConfirmationPage() {
           <div>
             <p className="text-xs text-slate-500 mb-1 font-medium">Tracking Reference</p>
             <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-md px-3 py-2.5">
-              <span className="font-mono text-base font-bold tracking-widest text-[#1B365D] flex-1">
+              <span className="font-mono text-base font-bold tracking-widest text-[#302E83] flex-1">
                 {creds.trackingNumber}
               </span>
               <button
                 onClick={() => copy(creds.trackingNumber, 'ref')}
                 className="text-slate-400 hover:text-slate-600 transition-colors"
                 title="Copy tracking number"
+                aria-label="Copy tracking number"
               >
                 <Copy className="h-4 w-4" />
               </button>
@@ -111,6 +112,7 @@ export default function ConfirmationPage() {
                 onClick={() => copy(creds.passcode, 'pass')}
                 className="text-slate-400 hover:text-slate-600 transition-colors shrink-0"
                 title="Copy passcode"
+                aria-label="Copy passcode"
               >
                 <Copy className="h-4 w-4" />
               </button>
@@ -136,7 +138,7 @@ export default function ConfirmationPage() {
           <Printer className="mr-2 h-4 w-4" />
           Print this page
         </Button>
-        <Button asChild className="bg-[#1B365D] hover:bg-[#2A4A7F] text-white ml-auto w-full sm:w-auto">
+        <Button asChild className="bg-[#302E83] hover:bg-[#252367] text-white ml-auto w-full sm:w-auto">
           <Link href="/track">
             Track My Complaint <ArrowRight className="ml-2 h-4 w-4" />
           </Link>

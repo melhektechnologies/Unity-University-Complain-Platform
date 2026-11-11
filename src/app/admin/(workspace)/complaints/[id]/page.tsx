@@ -1,5 +1,8 @@
-import { createServerClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
+import { getCurrentStaffUserContext } from '@/lib/auth/server';
+import { hasCapability } from '@/lib/auth/guards';
+import { CAPABILITIES } from '@/lib/auth/roles';
+import { getAvailableStatusTransitions } from '@/features/complaints/workflow';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +21,13 @@ const STATUS_BADGE: Record<string, string> = {
   CLOSED: 'closed',
 };
 
+const PRIORITY_BADGE: Record<string, string> = {
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+  URGENT: 'critical',
+};
+
 const STATUS_LABEL: Record<string, string> = {
   NEW: 'New',
   UNDER_REVIEW: 'Under Review',
@@ -34,7 +44,9 @@ export default async function ComplaintDetailPage({
 }: {
   params: { id: string };
 }) {
-  const supabase = await createServerClient();
+  const staffSession = await getCurrentStaffUserContext();
+  if (!staffSession) notFound();
+  const { supabase, staff } = staffSession;
 
   const { data: complaint, error } = await supabase
     .from('complaints')
@@ -87,13 +99,16 @@ export default async function ComplaintDetailPage({
   const internalNotes = (complaint.complaint_updates ?? []).filter(
     (u: { is_public: boolean }) => !u.is_public
   );
+  const availableStatuses = getAvailableStatusTransitions(complaint.status, staff);
+  const canWriteInternalNote = hasCapability(staff, CAPABILITIES.WRITE_INTERNAL_NOTES);
+  const canPublishPublicUpdate = hasCapability(staff, CAPABILITIES.PUBLISH_PUBLIC_UPDATE);
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="mx-auto max-w-6xl space-y-7 sm:space-y-8">
       {/* Back */}
       <Link
         href="/admin/dashboard"
-        className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-[#1B365D] transition-colors"
+        className="inline-flex min-h-9 items-center gap-1 rounded-sm text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
       >
         <ChevronLeft className="h-4 w-4" /> Back to Queue
       </Link>
@@ -101,7 +116,8 @@ export default async function ComplaintDetailPage({
       {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-1">
-          <h1 className="text-lg font-bold text-[#1B365D] leading-tight">{complaint.subject}</h1>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70">Case report</p>
+          <h1 className="text-2xl font-semibold leading-tight tracking-tight text-slate-900 sm:text-3xl">{complaint.subject}</h1>
           <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
             <span className="font-mono font-medium">{complaint.tracking_number}</span>
             <span>·</span>
@@ -111,7 +127,7 @@ export default async function ComplaintDetailPage({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={STATUS_BADGE[complaint.priority?.toLowerCase() === 'urgent' ? 'critical' : complaint.priority?.toLowerCase()] as Parameters<typeof Badge>[0]['variant']}>
+          <Badge variant={PRIORITY_BADGE[complaint.priority] as Parameters<typeof Badge>[0]['variant']}>
             {complaint.priority}
           </Badge>
           <Badge variant={STATUS_BADGE[complaint.status] as Parameters<typeof Badge>[0]['variant']}>
@@ -120,11 +136,11 @@ export default async function ComplaintDetailPage({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-6">
         {/* Main column */}
         <div className="lg:col-span-2 space-y-4">
           {/* Description */}
-          <Card>
+          <Card className="border-primary/10 bg-white shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-slate-700">Complaint Description</CardTitle>
             </CardHeader>
@@ -150,7 +166,7 @@ export default async function ComplaintDetailPage({
           </Card>
 
           {/* Public updates */}
-          <Card>
+          <Card className="border-primary/10 bg-white shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-slate-700">
                 Public Updates
@@ -162,7 +178,7 @@ export default async function ComplaintDetailPage({
                 <p className="text-xs text-slate-400 italic">No public updates yet.</p>
               ) : (
                 publicUpdates.map((u: { id: string; content: string; created_at: string }) => (
-                  <div key={u.id} className="border-l-2 border-[#008080] pl-3 py-0.5">
+                  <div key={u.id} className="border-l-2 border-[#302E83] pl-3 py-0.5">
                     <p className="text-xs text-slate-400 mb-0.5">{formatDate(u.created_at, { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     <p className="text-sm text-slate-700">{u.content}</p>
                   </div>
@@ -172,7 +188,7 @@ export default async function ComplaintDetailPage({
           </Card>
 
           {/* Internal notes */}
-          <Card className="border-amber-200 bg-amber-50/40">
+          <Card className="border-university-gold/60 bg-university-gold-soft/40">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-amber-800">
                 Internal Notes
@@ -200,6 +216,9 @@ export default async function ComplaintDetailPage({
           <ComplaintStatusPanel
             complaintId={complaint.id}
             currentStatus={complaint.status}
+            availableStatuses={availableStatuses}
+            canWriteInternalNote={canWriteInternalNote}
+            canPublishPublicUpdate={canPublishPublicUpdate}
           />
 
           {/* Student identity — only if not anonymous */}
@@ -231,7 +250,7 @@ export default async function ComplaintDetailPage({
                 {(identity as { email?: string }).email && (
                   <div>
                     <p className="text-xs text-slate-400">Email</p>
-                    <a href={`mailto:${(identity as { email: string }).email}`} className="text-[#008080] hover:underline break-all">
+                    <a href={`mailto:${(identity as { email: string }).email}`} className="text-[#302E83] hover:underline break-all">
                       {(identity as { email: string }).email}
                     </a>
                   </div>
@@ -255,7 +274,7 @@ export default async function ComplaintDetailPage({
           ) : null}
 
           {/* Status history */}
-          <Card>
+          <Card className="border-primary/10 bg-white shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-slate-700">Status History</CardTitle>
             </CardHeader>

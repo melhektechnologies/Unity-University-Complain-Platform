@@ -27,7 +27,7 @@ const nextConfig = {
               // script-src tightened in production via NEXT_PUBLIC_ENV check.
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: blob:",
+              "img-src 'self' data: blob: https://hebbkx1anhila5yf.public.blob.vercel-storage.com",
               // Supabase storage for file uploads
               `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''} https://*.supabase.co wss://*.supabase.co`,
               "font-src 'self'",
@@ -64,6 +64,11 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.supabase.co',
         pathname: '/storage/v1/object/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'hebbkx1anhila5yf.public.blob.vercel-storage.com',
+        pathname: '/photo_2023-08-29_18-31-39-EXL0jJY3h83oABrMLKkDoK9ogk6RYP.jpg',
       },
     ],
   },

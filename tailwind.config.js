@@ -52,13 +52,19 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // ── Institutional brand palette ──────────────────────────────────────
+        // ── Unity University brand palette ───────────────────────────────────
+        university: {
+          indigo: 'hsl(var(--university-indigo))',
+          'indigo-deep': 'hsl(var(--university-indigo-deep))',
+          gold: 'hsl(var(--university-gold))',
+          'gold-soft': 'hsl(var(--university-gold-soft))',
+        },
         institutional: {
-          navy: '#1B365D',      // Primary — headers, nav, prominent CTAs
-          'navy-light': '#2A4A7F', // Hover state for navy elements
-          teal: '#008080',      // Accent — links, highlights, secondary actions
-          'teal-light': '#0D9488', // Hover state for teal elements
-          accent: '#0E7490',    // Alternative accent (cyan-700)
+          navy: '#302E83',
+          'navy-light': '#252367',
+          teal: '#008080',
+          'teal-light': '#0D9488',
+          accent: '#0E7490',
           dark: '#0F172A',      // Near-black body text
           surface: '#F8FAFC',   // Page background
           'surface-raised': '#FFFFFF', // Card/panel background

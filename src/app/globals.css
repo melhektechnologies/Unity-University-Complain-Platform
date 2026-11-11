@@ -18,8 +18,8 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Primary = institutional navy */
-    --primary: 213 55% 24%;          /* #1B365D */
+    /* Primary = Unity University's indigo seal */
+    --primary: 243 47% 35%;
     --primary-foreground: 0 0% 100%;
 
     /* Secondary = light slate */
@@ -30,21 +30,25 @@
     --muted-foreground: 215 20% 45%; /* slate-500 */
 
     /* Accent = institutional teal */
-    --accent: 180 100% 25%;          /* #008080 */
-    --accent-foreground: 0 0% 100%;
+    --accent: 56 100% 94%;
+    --accent-foreground: 243 47% 24%;
 
     --destructive: 0 86% 61%;        /* red-500 */
     --destructive-foreground: 0 0% 100%;
 
     --border: 214 32% 91%;           /* slate-200 */
     --input: 214 32% 91%;
-    --ring: 213 55% 24%;             /* navy for focus rings */
+    --ring: 243 47% 35%;
 
     --radius: 0.5rem;
 
-    /* ── Institutional custom tokens ────────────────────────────────────── */
-    --navy: 213 55% 24%;
-    --navy-hover: 213 55% 32%;
+    /* ── Unity University brand tokens ───────────────────────────────────── */
+    --university-indigo: 243 47% 35%;
+    --university-indigo-deep: 243 49% 27%;
+    --university-gold: 56 100% 50%;
+    --university-gold-soft: 56 100% 94%;
+    --navy: 243 47% 35%;
+    --navy-hover: 243 49% 27%;
     --teal: 180 100% 25%;
     --teal-hover: 174 72% 32%;
   }

@@ -2,8 +2,12 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Unity Student Support | Initial Development Environment',
-  description: 'Student Complaint & Feedback Management Platform for Unity University, Ethiopia.',
+  title: {
+    default: 'Unity University | Student Support',
+    template: '%s | Unity University Student Support',
+  },
+  description: 'A secure Unity University portal for submitting a complaint and following its progress.',
+  applicationName: 'Unity University Student Support',
 };
 
 export default function RootLayout({

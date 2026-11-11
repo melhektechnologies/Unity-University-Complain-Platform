@@ -62,7 +62,14 @@ const STATUS_CONFIG: Record<ComplaintStatus, { label: string; color: string; bad
 };
 
 const STATUS_ORDER: ComplaintStatus[] = [
-  'NEW', 'UNDER_REVIEW', 'ASSIGNED', 'IN_PROGRESS', 'RESOLVED', 'CLOSED',
+  'NEW',
+  'UNDER_REVIEW',
+  'ASSIGNED',
+  'IN_PROGRESS',
+  'AWAITING_RESPONSE',
+  'ESCALATED',
+  'RESOLVED',
+  'CLOSED',
 ];
 
 export default function TrackComplaintPage() {
@@ -110,21 +117,24 @@ export default function TrackComplaintPage() {
   const statusConfig = result ? STATUS_CONFIG[result.status] : null;
 
   return (
-    <div className="space-y-6 max-w-lg mx-auto">
-      <div>
-        <h1 className="text-xl font-bold text-[#1B365D]">Track Your Complaint</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Enter the tracking number and passcode from your submission confirmation.
+    <div className="mx-auto max-w-3xl space-y-7 sm:space-y-8">
+      <div className="mx-auto max-w-2xl space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70">Student support · Case lookup</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#302E83] sm:text-3xl">Track your complaint</h1>
+        <p className="max-w-xl text-sm leading-6 text-slate-600">
+          Enter the tracking number and passcode from your submission confirmation to see the latest available update.
         </p>
       </div>
 
       {/* Lookup form */}
-      <Card>
-        <CardContent className="pt-5 space-y-4">
+      <Card className="mx-auto max-w-2xl border-primary/10 bg-white shadow-sm">
+        <CardContent className="space-y-5 p-5 sm:p-7">
           <div className="space-y-1.5">
             <Label htmlFor="trackingNumber">Tracking Number</Label>
             <Input
               id="trackingNumber"
+              aria-invalid={Boolean(errors.trackingNumber)}
+              aria-describedby={errors.trackingNumber ? 'tracking-number-error' : undefined}
               placeholder="UU-2026-XXXXXX"
               className={cn('font-mono uppercase', errors.trackingNumber && 'border-red-400')}
               {...form.register('trackingNumber', {
@@ -134,7 +144,7 @@ export default function TrackComplaintPage() {
               })}
             />
             {errors.trackingNumber && (
-              <p className="text-xs text-red-600 flex items-center gap-1">
+              <p id="tracking-number-error" className="text-xs text-red-600 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />{errors.trackingNumber.message}
               </p>
             )}
@@ -145,12 +155,14 @@ export default function TrackComplaintPage() {
             <Input
               id="passcode"
               type="password"
+              aria-invalid={Boolean(errors.passcode)}
+              aria-describedby={errors.passcode ? 'passcode-error' : undefined}
               placeholder="Enter your passcode"
               className={errors.passcode ? 'border-red-400' : ''}
               {...form.register('passcode')}
             />
             {errors.passcode && (
-              <p className="text-xs text-red-600 flex items-center gap-1">
+              <p id="passcode-error" className="text-xs text-red-600 flex items-center gap-1">
                 <AlertCircle className="h-3 w-3" />{errors.passcode.message}
               </p>
             )}
@@ -159,7 +171,7 @@ export default function TrackComplaintPage() {
           {serverError && (
             <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-700">
               <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
-              {serverError}
+              <span role="alert">{serverError}</span>
             </div>
           )}
 
@@ -167,7 +179,7 @@ export default function TrackComplaintPage() {
             type="button"
             onClick={form.handleSubmit(onSubmit)}
             disabled={isLoading}
-            className="w-full bg-[#1B365D] hover:bg-[#2A4A7F] text-white"
+            className="w-full bg-[#302E83] hover:bg-[#252367] text-white"
           >
             {isLoading ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Looking up…</>
@@ -180,7 +192,7 @@ export default function TrackComplaintPage() {
 
       {/* Not found */}
       {notFound && (
-        <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg p-4">
+        <div role="alert" className="mx-auto flex max-w-2xl items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
           <AlertCircle className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-semibold text-amber-800">No complaint found</p>
@@ -194,9 +206,10 @@ export default function TrackComplaintPage() {
 
       {/* Result */}
       {result && statusConfig && (
-        <div className="space-y-4 animate-fade-in">
-          {/* Status header */}
-          <Card className="border-slate-200">
+        <div aria-live="polite" className="mx-auto grid max-w-5xl gap-4 animate-fade-in lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
+          <div className="space-y-4">
+            {/* Status header */}
+          <Card className="border-primary/10 bg-white shadow-sm">
             <CardContent className="pt-5 pb-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1 flex-1 min-w-0">
@@ -216,7 +229,7 @@ export default function TrackComplaintPage() {
           </Card>
 
           {/* Progress timeline */}
-          <Card className="border-slate-200">
+          <Card className="border-primary/10 bg-white shadow-sm">
             <CardHeader className="pb-2">
               <CardTitle className="text-sm text-slate-700">Case Progress</CardTitle>
             </CardHeader>
@@ -236,7 +249,7 @@ export default function TrackComplaintPage() {
                         className={cn(
                           'w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5',
                           isPast && 'bg-emerald-100 text-emerald-600',
-                          isCurrentStatus && 'bg-[#1B365D] text-white',
+                          isCurrentStatus && 'bg-[#302E83] text-white',
                           isFuture && 'bg-slate-100 text-slate-300'
                         )}
                       >
@@ -272,15 +285,18 @@ export default function TrackComplaintPage() {
             </CardContent>
           </Card>
 
-          {/* Public updates */}
+          </div>
+
+          <div className="space-y-4">
+            {/* Public updates */}
           {result.publicUpdates.length > 0 && (
-            <Card className="border-slate-200">
+            <Card className="border-primary/10 bg-white shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm text-slate-700">Updates from Student Affairs</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {result.publicUpdates.map((update, i) => (
-                  <div key={i} className="border-l-2 border-[#008080] pl-3 py-0.5">
+                  <div key={i} className="border-l-2 border-university-gold pl-3 py-0.5">
                     <p className="text-xs text-slate-500 mb-0.5">{formatDate(update.createdAt, { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     <p className="text-sm text-slate-700">{update.note}</p>
                   </div>
@@ -291,7 +307,7 @@ export default function TrackComplaintPage() {
 
           {/* Awaiting response notice */}
           {result.status === 'AWAITING_RESPONSE' && (
-            <div className="flex items-start gap-3 bg-orange-50 border border-orange-200 rounded-lg p-4">
+            <div className="flex items-start gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4">
               <ArrowUpCircle className="h-5 w-5 text-orange-600 shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-semibold text-orange-800">Your response is needed</p>
@@ -302,6 +318,7 @@ export default function TrackComplaintPage() {
               </div>
             </div>
           )}
+          </div>
         </div>
       )}
     </div>

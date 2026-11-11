@@ -52,11 +52,6 @@ export async function middleware(request: NextRequest) {
     }
   }
 
-  // If authenticated user visits /admin/login, redirect to /admin/dashboard
-  if (pathname === '/admin/login' && user) {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-  }
-
   return response;
 }
 

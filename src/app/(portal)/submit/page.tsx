@@ -68,8 +68,8 @@ const PRIVACY_OPTIONS = [
     value: 'CONFIDENTIAL' as const,
     label: 'Confidential',
     icon: ShieldCheck,
-    color: 'border-teal-300 bg-teal-50',
-    selectedColor: 'border-teal-500 bg-teal-100 ring-2 ring-teal-500',
+    color: 'border-university-gold bg-university-gold-soft',
+    selectedColor: 'border-primary bg-university-gold-soft ring-2 ring-primary/25',
     desc: 'Your identity is known only to senior staff — not shared with the accused party or other handlers.',
   },
   {
@@ -166,32 +166,32 @@ export default function SubmitComplaintPage() {
   const stepLabels = ['Privacy', 'Your Complaint', 'Your Details'];
 
   return (
-    <div className="space-y-6">
-      {/* Page heading */}
-      <div>
-        <h1 className="text-xl font-bold text-[#1B365D]">Submit a Complaint</h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Step {step} of 3 — {stepLabels[step - 1]}
+    <div className="mx-auto max-w-3xl space-y-7 sm:space-y-8">
+      <div className="space-y-2">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary/70">Student support · New submission</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-[#302E83] sm:text-3xl">Submit a complaint</h1>
+        <p className="text-sm leading-6 text-slate-600">
+          Step {step} of 3 <span aria-hidden="true">·</span> {stepLabels[step - 1]}. You can go back to review your answers before submitting.
         </p>
       </div>
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2">
+      <div role="group" aria-label={`Step ${step} of 3: ${stepLabels[step - 1]}`} className="flex items-center gap-2 rounded-xl border border-primary/10 bg-white px-4 py-4 shadow-sm">
         {([1, 2, 3] as Step[]).map((s) => (
           <div key={s} className="flex items-center gap-2">
             <div
+              aria-current={s === step ? 'step' : undefined}
               className={cn(
-                'w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-colors',
+                'flex size-8 items-center justify-center rounded-full border-2 text-xs font-bold transition-colors',
                 s < step
-                  ? 'bg-[#1B365D] border-[#1B365D] text-white'
+                  ? 'bg-[#302E83] border-[#302E83] text-white'
                   : s === step
-                  ? 'border-[#1B365D] text-[#1B365D] bg-white'
+                  ? 'border-[#302E83] text-[#302E83] bg-white'
                   : 'border-slate-300 text-slate-400 bg-white'
               )}
             >
               {s < step ? '✓' : s}
             </div>
-            {s < 3 && <div className={cn('h-0.5 w-8 sm:w-16 transition-colors', s < step ? 'bg-[#1B365D]' : 'bg-slate-200')} />}
+            {s < 3 && <div className={cn('h-0.5 w-8 sm:w-16 transition-colors', s < step ? 'bg-[#302E83]' : 'bg-slate-200')} />}
           </div>
         ))}
         <span className="ml-auto text-xs text-slate-400 hidden sm:block">
@@ -201,7 +201,7 @@ export default function SubmitComplaintPage() {
 
       {/* ── STEP 1: Privacy Selection ── */}
       {step === 1 && (
-        <Card>
+        <Card className="border-primary/10 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Choose your privacy level</CardTitle>
             <CardDescription>
@@ -213,6 +213,7 @@ export default function SubmitComplaintPage() {
               <button
                 key={value}
                 type="button"
+                aria-pressed={privacyType === value}
                 onClick={() => setValue('privacyType', value)}
                 className={cn(
                   'w-full text-left p-4 rounded-lg border-2 transition-all',
@@ -236,7 +237,7 @@ export default function SubmitComplaintPage() {
 
       {/* ── STEP 2: Complaint Details ── */}
       {step === 2 && (
-        <Card>
+        <Card className="border-primary/10 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">Describe your complaint</CardTitle>
             <CardDescription>
@@ -251,6 +252,8 @@ export default function SubmitComplaintPage() {
               </Label>
               <select
                 id="category"
+                aria-invalid={Boolean(errors.category)}
+                aria-describedby={errors.category ? 'category-error' : undefined}
                 className={cn(
                   'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm',
                   'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1',
@@ -264,7 +267,7 @@ export default function SubmitComplaintPage() {
                 ))}
               </select>
               {errors.category && (
-                <p className="text-xs text-red-600 flex items-center gap-1">
+                <p id="category-error" className="text-xs text-red-600 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />{errors.category.message}
                 </p>
               )}
@@ -277,12 +280,14 @@ export default function SubmitComplaintPage() {
               </Label>
               <Input
                 id="subject"
+                aria-invalid={Boolean(errors.subject)}
+                aria-describedby={errors.subject ? 'subject-error' : undefined}
                 placeholder="e.g. Unfair grade in CHEM 101 final exam"
                 className={errors.subject ? 'border-red-400' : ''}
                 {...form.register('subject')}
               />
               {errors.subject && (
-                <p className="text-xs text-red-600 flex items-center gap-1">
+                <p id="subject-error" className="text-xs text-red-600 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />{errors.subject.message}
                 </p>
               )}
@@ -295,6 +300,8 @@ export default function SubmitComplaintPage() {
               </Label>
               <Textarea
                 id="description"
+                aria-invalid={Boolean(errors.description)}
+                aria-describedby={errors.description ? 'description-error' : undefined}
                 placeholder="Describe what happened, when it occurred, who was involved, and what outcome you are seeking…"
                 rows={6}
                 className={errors.description ? 'border-red-400' : ''}
@@ -304,7 +311,7 @@ export default function SubmitComplaintPage() {
                 {watch('description')?.length ?? 0}/5000
               </p>
               {errors.description && (
-                <p className="text-xs text-red-600 flex items-center gap-1">
+                <p id="description-error" className="text-xs text-red-600 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />{errors.description.message}
                 </p>
               )}
@@ -318,12 +325,14 @@ export default function SubmitComplaintPage() {
               <Input
                 id="incidentDate"
                 type="date"
+                aria-invalid={Boolean(errors.incidentDate)}
+                aria-describedby={errors.incidentDate ? 'incident-date-error' : undefined}
                 max={new Date().toISOString().split('T')[0]}
                 className={errors.incidentDate ? 'border-red-400' : ''}
                 {...form.register('incidentDate')}
               />
               {errors.incidentDate && (
-                <p className="text-xs text-red-600 flex items-center gap-1">
+                <p id="incident-date-error" className="text-xs text-red-600 flex items-center gap-1">
                   <AlertCircle className="h-3 w-3" />{errors.incidentDate.message}
                 </p>
               )}
@@ -347,7 +356,7 @@ export default function SubmitComplaintPage() {
 
       {/* ── STEP 3: Identity ── */}
       {step === 3 && (
-        <Card>
+        <Card className="border-primary/10 bg-white shadow-sm">
           <CardHeader>
             <CardTitle className="text-base">
               {isAnonymous ? 'Review and confirm' : 'Your contact information'}
@@ -387,12 +396,14 @@ export default function SubmitComplaintPage() {
                     </Label>
                     <Input
                       id="studentName"
+                      aria-invalid={Boolean(errors.studentName)}
+                      aria-describedby={errors.studentName ? 'student-name-error' : undefined}
                       placeholder="As it appears on your student ID"
                       className={errors.studentName ? 'border-red-400' : ''}
                       {...form.register('studentName')}
                     />
                     {errors.studentName && (
-                      <p className="text-xs text-red-600">{errors.studentName.message}</p>
+                      <p id="student-name-error" className="text-xs text-red-600">{errors.studentName.message}</p>
                     )}
                   </div>
                   <div className="space-y-1.5">
@@ -401,6 +412,8 @@ export default function SubmitComplaintPage() {
                     </Label>
                     <Input
                       id="studentId"
+                      aria-invalid={Boolean(errors.studentId)}
+                      aria-describedby={errors.studentId ? 'student-id-error' : undefined}
                       placeholder="e.g. UU/0001/2022"
                       className={errors.studentId ? 'border-red-400' : ''}
                       {...form.register('studentId')}
@@ -415,12 +428,14 @@ export default function SubmitComplaintPage() {
                     <Input
                       id="email"
                       type="email"
+                      aria-invalid={Boolean(errors.email)}
+                      aria-describedby={errors.email ? 'student-email-error' : undefined}
                       placeholder="student@unity.edu.et"
                       className={errors.email ? 'border-red-400' : ''}
                       {...form.register('email')}
                     />
                     {errors.email && (
-                      <p className="text-xs text-red-600">{errors.email.message}</p>
+                      <p id="student-email-error" className="text-xs text-red-600">{errors.email.message}</p>
                     )}
                   </div>
                   <div className="space-y-1.5">
@@ -480,7 +495,7 @@ export default function SubmitComplaintPage() {
           <Button
             type="button"
             onClick={handleNext}
-            className="ml-auto bg-[#1B365D] hover:bg-[#2A4A7F] text-white"
+            className="ml-auto bg-[#302E83] hover:bg-[#252367] text-white"
           >
             Continue <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
@@ -489,7 +504,7 @@ export default function SubmitComplaintPage() {
             type="button"
             onClick={form.handleSubmit(onSubmit)}
             disabled={isSubmitting}
-            className="ml-auto bg-[#1B365D] hover:bg-[#2A4A7F] text-white min-w-[140px]"
+            className="ml-auto bg-[#302E83] hover:bg-[#252367] text-white min-w-[140px]"
           >
             {isSubmitting ? (
               <>
