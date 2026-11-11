@@ -13,7 +13,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     <div className="flex min-h-screen flex-col bg-background text-foreground">
       <a className="skip-link" href="#main-content">Skip to main content</a>
 
-      <header className="relative z-10 border-b border-white/10 bg-primary text-primary-foreground shadow-sm">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#17233f]/95 text-primary-foreground shadow-lg shadow-slate-950/10 backdrop-blur-xl">
         <div className="content-container flex min-h-[76px] items-center justify-between gap-4 py-3">
           <Link href="/" className="group flex min-w-0 items-center gap-3 rounded-sm" aria-label="Unity University Student Support home">
             <UnitySeal size={48} />
@@ -45,11 +45,11 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
         <div className="h-1 bg-university-gold" aria-hidden="true" />
       </header>
 
-      <main id="main-content" className="content-container w-full flex-1 py-8 sm:py-12 lg:py-14">
+      <main id="main-content" className="content-container page-enter w-full flex-1 py-8 sm:py-12 lg:py-16">
         {children}
       </main>
 
-      <footer className="mt-auto border-t border-border bg-white">
+      <footer className="mt-auto border-t border-slate-200/80 bg-white/85 backdrop-blur">
         <div className="content-container flex flex-col gap-3 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <p>© {new Date().getFullYear()} Unity University · Ethiopia</p>
           <p>Office of Student Affairs</p>

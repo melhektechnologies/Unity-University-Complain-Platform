@@ -9,7 +9,7 @@
 @layer base {
   :root {
     /* ── shadcn/ui semantic tokens (light mode) ─────────────────────────── */
-    --background: 210 40% 98%;       /* slate-50  #F8FAFC */
+    --background: 40 33% 97%;        /* warm ivory */
     --foreground: 222 47% 11%;       /* slate-900 #0F172A */
 
     --card: 0 0% 100%;               /* white */
@@ -220,5 +220,64 @@
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
     overflow: hidden;
+  }
+
+  .page-enter {
+    animation: page-enter 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .enter-up {
+    animation: enter-up 800ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .enter-up-delay {
+    animation: enter-up 900ms 120ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+
+  .float-card {
+    animation: float-card 6s ease-in-out infinite;
+  }
+
+  .hero-image {
+    animation: hero-image 18s ease-in-out infinite alternate;
+  }
+
+  .privacy-card {
+    transition: transform 240ms ease, box-shadow 240ms ease, border-color 240ms ease;
+  }
+
+  .privacy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 24px 55px -36px hsl(var(--primary) / 0.45);
+    border-color: hsl(var(--primary) / 0.24);
+  }
+
+  @keyframes page-enter {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes enter-up {
+    from { opacity: 0; transform: translateY(22px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes float-card {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-9px); }
+  }
+
+  @keyframes hero-image {
+    from { transform: scale(1); }
+    to { transform: scale(1.045); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .page-enter, .enter-up, .enter-up-delay, .float-card, .hero-image {
+      animation: none;
+    }
+
+    .privacy-card { transition: none; }
+    .privacy-card:hover { transform: none; }
   }
 }
