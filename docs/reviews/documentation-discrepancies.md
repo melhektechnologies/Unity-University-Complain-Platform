@@ -31,17 +31,17 @@ This forensic review cross-references the Product Requirements Document (PRD), F
 - **Resolution:** 
   1. The RLS policy for `department_handler` is augmented to exclude cases where `LOWER(complaints.accused_party) ILIKE '%' || LOWER(public.profiles.full_name) || '%'`.
   2. The application assignment service (`assignment.service.ts`) executes a server-side pre-assignment barrier that prevents delegating a complaint to any staff member whose name or profile ID matches `accused_party`.
-  3. Cases where a Department Chair or Dean is named automatically elevate to `is_restricted_sensitive = true`, quarantining the case to the `escalation_officer` role.
+  3. Cases where a Department Chair or Dean is named automatically elevate to `is_restricted_sensitive = true`, excluding department handlers. Migration `0014` now restricts case-data access to the Student Affairs CMS role. Conflict referrals remain out of platform.
 
 ---
 
 ### D-03: Dean of Faculty vs. Dean of Students Escalation Routing
 - **Discrepancy:** In `BR-007`, complaints against a Faculty Dean route to the "Dean of Students / Provost Office". However, `roles` only provides an aggregate `escalation_officer` role.
-- **Risk:** If a complaint is filed against the Dean of Students themselves, routing to `escalation_officer` could expose the case to the accused individual.
+- **Risk:** The Student Dean is the sole CMS receiver; if a complaint concerns that office, in-platform routing would expose it to the subject of the complaint.
 - **Resolution:**
-  1. Introduce a configurable setting in `system_settings`: `dean_recusal_escalation_role` (default: `'escalation_officer'`).
-  2. Implement a designated recusal flag in the escalation service. When a case names the Dean of Students, the triage administrator can route the case to the university's designated alternative reviewer (e.g., Executive President / Provost Office) via a targeted assignment without modifying the schema.
-  3. Flagged in `docs/product/open-questions.md` (OQ-05) for formal written institutional sign-off.
+  1. The MVP has no in-platform alternate recipient or recusal flag.
+  2. The university must define an out-of-platform referral route for complaints involving the Student Dean before launching the student intake.
+  3. Migration `0014` is applied and the live catalog check confirms the active Student Affairs officer is the sole direct case-data reader. OQ-05 records the external referral decision needed before rollout.
 
 ---
 

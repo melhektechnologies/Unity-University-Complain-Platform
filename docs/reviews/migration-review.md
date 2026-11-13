@@ -95,11 +95,9 @@ The initial preliminary audit noted that migrations appeared to begin at `0002`.
    - `internal_notes`: Public access is **STRICTLY BLOCKED**.
    - `audit_logs`: Public access is **STRICTLY BLOCKED**.
 3. **Role Partitioning:**
-   - `department_handler`: Can only view non-restricted complaints belonging to their assigned department (`department_id = public.my_department_id()`).
-   - `complaint_reviewer`: Can view non-restricted complaints across all departments; cannot view confidential PII.
-   - `student_affairs_admin`: Can view all non-restricted complaints and confidential PII; manages triage and assignment.
-   - `escalation_officer`: Full access including `is_restricted_sensitive = true` and restricted internal notes.
-   - `auditor`: Read-only access to complaints and audit logs; cannot modify records.
+   - This describes the original `0007` architecture, not the single-receiver MVP.
+   - Active `student_affairs_admin`: sole complaint reader/manager; migration `0014` is applied and the live catalog check confirmed this boundary.
+   - Other staff roles remain defined for a future phase; migration `0014` removes their direct complaint-related data access and case-linked audit access.
    - `system_admin`: Access to taxonomy, profiles, and roles; no access to complaint narratives or identities.
 
 ---

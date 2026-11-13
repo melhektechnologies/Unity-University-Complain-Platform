@@ -48,35 +48,28 @@ Access to complaint data is strictly partitioned. General university employees p
 
 2. **Student Affairs Administrator / Intake Officer (`role: student_affairs_admin`):**
    - Central triage coordinator.
-   - Read permissions: All standard non-restricted complaints across all departments; full complainant PII (if identified or confidential, excluding restricted sensitive cases); internal notes.
+   - Read permissions: All complaints across departments, including restricted-sensitive cases. Live migration `0014` restricts case reads to this active CMS role; identity access follows the same boundary.
    - Write permissions: Triage, categorize, re-title, assign department/handler, add internal notes, request clarification from student, escalate, flag as restricted.
-   - Data restrictions: Cannot view complaints designated as `restricted_sensitive` unless explicitly added as an authorized reviewer.
+   - Data restrictions: Access requires an active staff profile and the `student_affairs_admin` role. The university must define how complaints involving this officer or the Student Affairs office are handled outside the CMS.
 
 3. **Complaint Reviewer (`role: complaint_reviewer`):**
-   - Triage assistant within Student Affairs or Quality Assurance.
-   - Read permissions: Non-restricted complaint queue; case evidence; historical public responses.
-   - Write permissions: Preliminary categorization, validation of basic details, drafting internal notes. Cannot perform final closure without administrator sign-off.
+   - Reserved for a future upgrade; no complaint access or CMS account is provisioned in the one-receiver MVP.
 
 4. **Department-Level Case Handler (`role: department_handler`):**
-   - Designated faculty/department representative (e.g., Head of Accounting Department, Registrar Officer, Campus Facilities Lead).
-   - Read permissions: **Only complaints assigned directly to their specific department and assigned to them or unassigned within their department.** Cannot view complaints outside their department.
-   - Complainant PII visibility: Can see PII for `Identified` cases; **cannot see student identity for `Confidential` cases** (identity is held by Student Affairs/Escalation Officers). Cannot see identity for `Anonymous` cases.
-   - Write permissions: Internal investigation notes, request follow-up info, propose resolution, submit draft response for approval.
+   - Reserved for a future upgrade; department users do not receive complaints through the MVP CMS.
 
 5. **Authorized Senior Reviewer / Escalation Officer (`role: escalation_officer`):**
-   - Senior leadership (Dean of Students, University Vice President, Ethics Committee Chair).
-   - Read permissions: Full access across all categories, including `restricted_sensitive` cases (e.g., academic corruption, harassment, staff misconduct). Full access to confidential complainant PII when authorized.
-   - Write permissions: Override assignments, reassign conflicting parties, approve sensitive responses, direct investigation commands, perform formal closure, handle appeals.
+   - Reserved for a future upgrade; this role does not receive complaint data in the one-receiver MVP.
 
 6. **System Administrator (`role: system_admin`):**
    - Technical administrator responsible for infrastructure, taxonomy configuration, and account lifecycle.
-   - Read permissions: System metrics, configuration tables (faculties, departments, categories, SLAs), audit logs.
+   - Read permissions: System metrics and configuration tables (faculties, departments, categories, SLAs). Migration `0014` excludes case-linked audit entries from system administrator/auditor access.
    - Write permissions: User role provisioning/deactivation, taxonomy updates, system parameter settings.
    - **Data restrictions:** Zero operational access to complaint content or complainant PII. Admin UI separates technical management from case investigation to prevent administrative snooping.
 
 7. **Read-Only Auditor (`role: auditor`):**
    - Internal compliance, accreditation, or quality assurance evaluator.
-   - Read permissions: Anonymized/de-identified complaint data, aggregate reports, immutable audit logs, SLA performance statistics.
+   - Read permissions: Non-case audit logs and system metrics only; no complaint records, identities, or case-linked audit entries.
    - Write permissions: None (strictly read-only). Cannot alter complaints, notes, or user accounts.
 
 ### 3.2 Granular Action- and Data-Level Matrix
@@ -85,19 +78,19 @@ Access to complaint data is strictly partitioned. General university employees p
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Submit New Complaint** | Full | No | No (via public) | No | No | No | No |
 | **Track Complaint via Key** | Own Record Only | No | No | No | No | No | No |
-| **View Unrestricted Complaint Queue** | No | Read | Read / Triage | Department Only | Read / Oversee | No | Anonymized |
-| **View Restricted / Sensitive Cases** | No | No | No | No | Read / Full | No | No |
-| **View Complainant PII (Identified)** | Own Info | Read | Read | Read (Assigned) | Read | No | Masked |
-| **View Complainant PII (Confidential)**| Own Info | No | Read (Authorized) | **Masked / Hidden** | Read (Authorized) | No | Masked |
+| **View Unrestricted Complaint Queue** | No | No | **Read / Triage** | No | No | No | No |
+| **View Restricted / Sensitive Cases** | No | No | **Read / Triage** | No | No | No | No |
+| **View Complainant PII (Identified)** | Own Info | No | **Read** | No | No | No | No |
+| **View Complainant PII (Confidential)**| Own Info | No | **Read** | No | No | No | No |
 | **View Complainant PII (Anonymous)** | N/A (None) | None Exists | None Exists | None Exists | None Exists | None | None |
-| **Add Internal Investigation Notes** | No | Yes | Yes | Yes (Assigned) | Yes | No | No |
-| **View Internal Notes** | **Forbidden (Never)**| Yes | Yes | Yes (Assigned) | Yes | No | Read |
-| **Draft / Publish Public Response** | No (Reply only) | Draft | Publish | Draft / Publish* | Publish / Override | No | No |
-| **Assign / Reassign Case** | No | Propose | Yes | Delegate inside Dept | Override All | No | No |
-| **Mutate Status to Resolved / Closed**| No | No | Yes | Propose Resolution | Yes | No | No |
-| **Reopen Closed Complaint** | Request Only | No | Yes | No | Yes | No | No |
+| **Add Internal Investigation Notes** | No | No | **Yes** | No | No | No | No |
+| **View Internal Notes** | **Forbidden (Never)**| No | **Yes** | No | No | No | No |
+| **Draft / Publish Public Response** | No (Reply only) | No | **Publish** | No | No | No | No |
+| **Assign / Reassign Case** | No | No | **Yes** | No | No | No | No |
+| **Mutate Status to Resolved / Closed**| No | No | **Yes** | No | No | No | No |
+| **Reopen Closed Complaint** | Request Only | No | **Yes** | No | No | No | No |
 | **Manage Staff Roles & Taxonomy** | No | No | No | No | No | Yes | No |
-| **Inspect System Audit Logs** | No | No | Limited (Cases) | No | Case Audits | Full System | Full System |
+| **Inspect System Audit Logs** | No | No | **Case-linked entries** | No | No | Non-case only | Non-case only |
 
 *\*Note: Department handler direct publishing of public responses is subject to institutional review rule (see Business Rules).*
 
@@ -118,12 +111,12 @@ Access to complaint data is strictly partitioned. General university employees p
    - Display of sanitized progress timeline (Status, Status Date, Authorized Message to Student).
    - Two-way clarification: If status is `Awaiting Response`, complainant can post a single message and supplementary attachment.
 3. **Administrative Case Management System (CMS):**
-   - Supabase Auth session for university staff with MFA readiness.
-   - Role-based dashboard with status counts, overdue SLA indicators, and unassigned queue.
-   - Conflict-of-interest assignment safeguards (cannot assign case to an individual named as respondent).
-   - Strict dual-timeline detail view: Internal Timeline (internal notes, assignment history, audit logs) vs. Public Timeline (messages delivered to student).
+   - Supabase Auth session for the single Student Dean / Student Affairs account.
+   - One-person dashboard with status counts, overdue SLA indicators, and the complaint queue.
+   - Case detail view with student contact, submitted evidence, public updates, and status history.
+   - No department assignment, reviewer queue, or second case recipient in the MVP.
    - Status transition state machine enforcement.
-   - Escalation trigger to Dean/Senior Reviewer with mandatory justification note.
+   - No second case recipient or committee queue in the MVP; referrals involving the Student Dean use a separate university process outside the platform.
 4. **Security & Auditing:**
    - Database-level RLS policies on all operational tables.
    - Rate limiting on public submissions and tracking lookups.

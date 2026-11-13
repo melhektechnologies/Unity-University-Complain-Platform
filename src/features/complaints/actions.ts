@@ -18,6 +18,12 @@ export interface SubmitComplaintResult {
   fieldErrors?: Record<string, string[]>;
 }
 
+function buildSubject(category: string, description: string): string {
+  const cleaned = description.replace(/\s+/g, ' ').trim();
+  const snippet = cleaned.length > 80 ? `${cleaned.slice(0, 77)}…` : cleaned;
+  return `${category}: ${snippet}`.slice(0, 200);
+}
+
 export async function submitComplaintAction(
   rawInput: unknown,
   clientIp?: string
@@ -32,69 +38,76 @@ export async function submitComplaintAction(
   }
 
   const input: CreateComplaintInput = parseResult.data;
+  if (input.evidenceCount > 0 || !input.description) {
+    return {
+      success: false,
+      error: 'Please submit attachments through the complaint evidence form.',
+    };
+  }
   const admin = createAdminClient();
 
-  // Generate bearer tracking credentials with 128 bits of entropy
   const trackingNumber = generateTrackingReference();
   const { cleartextPasscode } = generateTrackingPasscode();
   const trackingHash = hashPasscode(cleartextPasscode);
 
   try {
-    // 1. Insert core complaint record (ZERO PII)
+    const { data: categoryRow, error: categoryError } = await admin
+      .from('complaint_categories')
+      .select('id')
+      .eq('name', input.category)
+      .eq('is_active', true)
+      .maybeSingle();
+
+    if (categoryError || !categoryRow) {
+      return { success: false, error: 'That category is not currently available. Choose another category.' };
+    }
+
+    const today = new Date().toISOString().slice(0, 10);
+
     const { data: complaint, error: complaintError } = await admin
       .from('complaints')
       .insert({
         tracking_number: trackingNumber,
         tracking_hash: trackingHash,
-        privacy_type: input.privacyType,
+        privacy_type: 'IDENTIFIED',
         status: 'NEW',
         priority: 'MEDIUM',
-        campus_id: input.campusId,
-        faculty_id: input.facultyId,
-        department_id: input.departmentId,
-        category_id: input.categoryId,
-        subject: input.subject,
+        category_id: categoryRow.id,
+        subject: buildSubject(input.category, input.description),
         description: input.description,
-        incident_date: input.incidentDate,
-        accused_party: input.accusedParty || null,
+        incident_date: today,
+        accused_party: null,
         sla_status: 'NORMAL',
       })
       .select('id, tracking_number')
       .single();
 
     if (complaintError || !complaint) {
-      console.error('[SUBMISSION_ERROR] Failed to insert complaint:', complaintError?.message);
+      console.error('[SUBMISSION_ERROR]', complaintError?.message);
       return {
         success: false,
         error: 'An unexpected database error occurred while creating your complaint. Please try again.',
       };
     }
 
-    // 2. Decoupled Identity Storage (PII Airgap)
-    if (input.privacyType === 'IDENTIFIED' || input.privacyType === 'CONFIDENTIAL') {
-      const { error: identityError } = await admin
-        .from('complaint_identities')
-        .insert({
-          complaint_id: complaint.id,
-          student_name: input.studentName!,
-          student_id_number: input.studentIdNumber!,
-          email: input.email!,
-          phone: input.phone!,
-          is_confidential: input.privacyType === 'CONFIDENTIAL',
-        });
+    const { error: identityError } = await admin.from('complaint_identities').insert({
+      complaint_id: complaint.id,
+      student_name: input.studentName,
+      student_id_number: input.studentId,
+      email: input.email?.trim() || '',
+      phone: input.phone,
+      is_confidential: false,
+    });
 
-      if (identityError) {
-        console.error('[IDENTITY_INSERT_ERROR] Failed to insert decoupled PII:', identityError.message);
-        // Rollback complaint record if identity insertion fails
-        await admin.from('complaints').delete().eq('id', complaint.id);
-        return {
-          success: false,
-          error: 'Failed to record student identity. Submission aborted to protect data integrity.',
-        };
-      }
+    if (identityError) {
+      console.error('[IDENTITY_INSERT_ERROR]', identityError.message);
+      await admin.from('complaints').delete().eq('id', complaint.id);
+      return {
+        success: false,
+        error: 'Failed to record student contact details. Submission aborted.',
+      };
     }
 
-    // 3. Append-only Audit Log
     await recordAuditLog({
       actorRole: 'public_student',
       action: 'COMPLAINT_SUBMITTED',
@@ -102,12 +115,10 @@ export async function submitComplaintAction(
       entityId: complaint.id,
       afterState: {
         tracking_number: trackingNumber,
-        privacy_type: input.privacyType,
-        category_id: input.categoryId,
-        department_id: input.departmentId,
+        category: input.category,
+        status: 'NEW',
       },
-      // Never store IP address for anonymous complaints
-      ipAddress: input.privacyType === 'ANONYMOUS' ? null : clientIp || null,
+      ipAddress: clientIp || null,
     });
 
     return {
@@ -124,4 +135,3 @@ export async function submitComplaintAction(
     };
   }
 }
-

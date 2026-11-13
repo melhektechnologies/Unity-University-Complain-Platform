@@ -1,12 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { verifyPasscode } from '@/lib/tracking/credentials';
-
-const TrackSchema = z.object({
-  trackingNumber: z.string().trim().min(1),
-  passcode: z.string().trim().min(1),
-});
+import { defaultTrackingLimiter, verifyPasscode } from '@/lib/tracking/credentials';
+import { toPublicStatus } from '@/lib/complaints/status';
+import { TrackingVerificationSchema } from '@/lib/validation/schemas';
 
 export async function POST(req: NextRequest) {
   let body: unknown;
@@ -16,60 +12,84 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Invalid request.' }, { status: 400 });
   }
 
-  const parsed = TrackSchema.safeParse(body);
+  const parsed = TrackingVerificationSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ success: false, error: 'Invalid input.' }, { status: 422 });
+  }
+
+  const clientKey =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown';
+
+  const limit = defaultTrackingLimiter.check(clientKey);
+  if (!limit.allowed) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: `Too many attempts. Try again in ${limit.retryAfterSeconds ?? 900} seconds.`,
+      },
+      { status: 429 }
+    );
   }
 
   const { trackingNumber, passcode } = parsed.data;
   const admin = createAdminClient();
 
-  // Fetch complaint by tracking number (admin bypasses RLS intentionally here)
   const { data: complaint } = await admin
     .from('complaints')
-    .select(`
+    .select(
+      `
       id,
       tracking_number,
       tracking_hash,
-      subject,
       status,
-      priority,
-      privacy_type,
       created_at,
       updated_at,
       complaint_categories(name),
       complaint_updates(
         id,
-        content,
+        message,
         is_public,
         created_at
       )
-    `)
+    `
+    )
     .eq('tracking_number', trackingNumber.toUpperCase())
     .maybeSingle();
 
+  // Same response for missing case / wrong passcode (no timing oracle).
   if (!complaint) {
-    // Return 200 with notFound to avoid timing oracle (don't distinguish not-found vs wrong passcode)
+    defaultTrackingLimiter.recordFailure(clientKey);
     return NextResponse.json({ success: false, notFound: true }, { status: 200 });
   }
 
-  // Verify passcode (timing-safe)
   const valid = verifyPasscode(passcode, complaint.tracking_hash as string);
   if (!valid) {
+    defaultTrackingLimiter.recordFailure(clientKey);
     return NextResponse.json({ success: false, notFound: true }, { status: 200 });
   }
 
-  // Return only public-safe data — never return tracking_hash, internal notes
-  const publicUpdates = ((complaint.complaint_updates as Array<{
-    id: string;
-    content: string;
-    is_public: boolean;
-    created_at: string;
-  }>) ?? [])
+  defaultTrackingLimiter.recordSuccess(clientKey);
+
+  const category = Array.isArray(complaint.complaint_categories)
+    ? complaint.complaint_categories[0]
+    : complaint.complaint_categories;
+
+  const publicUpdates = (
+    (complaint.complaint_updates as Array<{
+      id: string;
+      message: string;
+      is_public: boolean;
+      created_at: string;
+    }>) ?? []
+  )
     .filter((u) => u.is_public)
+    .sort(
+      (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )
     .map((u) => ({
-      status: complaint.status,
-      note: u.content,
+      note: u.message,
       createdAt: u.created_at,
     }));
 
@@ -77,10 +97,8 @@ export async function POST(req: NextRequest) {
     success: true,
     data: {
       trackingNumber: complaint.tracking_number,
-      status: complaint.status,
-      priority: complaint.priority,
-      subject: complaint.subject,
-      category: (complaint.complaint_categories as unknown as { name: string } | null)?.name ?? 'General',
+      status: toPublicStatus(complaint.status),
+      category: (category as { name?: string } | null)?.name ?? 'General',
       submittedAt: complaint.created_at,
       lastUpdatedAt: complaint.updated_at,
       publicUpdates,

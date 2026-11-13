@@ -62,6 +62,13 @@ This repository represents the initial development and staging foundation for **
    - `0006_state_machine_guard.sql` — Transition validation trigger, Auto-status history
    - `0007_row_level_security.sql` — Complete RLS policies on all 17 tables with conflict of interest guards
    - `0008_seed_data.sql` — Role enumeration, default categories, initial taxonomy
+   - `0009_lean_student_affairs.sql` — Lean Student Affairs lifecycle and optional student email
+   - `0010_lean_nullable_taxonomy.sql` — Makes intake taxonomy optional for the lean submission flow
+   - `0011_lock_migration_ledger.sql` — Restricts public access to migration metadata
+   - `0012_mvp_optional_evidence.sql` — Allows optional detail with evidence, adds audio types, deactivates housing/dining
+   - `0013_student_affairs_sensitive_read.sql` — Grants the designated Student Affairs role access to sensitive complaints
+
+   **Live project note:** migrations `0011` and `0012` are already applied to the connected Supabase project. `0013` is a reviewed local draft and requires the project owner's explicit approval before it is applied because it expands access to sensitive complaint details.
 
 4. **Run the automated test suite:**
    ```bash
@@ -101,6 +108,9 @@ This repository represents the initial development and staging foundation for **
 ## 4. Documentation Index
 
 - [Database Design & Data Model](docs/architecture/database-design.md)
+- [Lean MVP Architecture](docs/architecture/mvp-architecture.md)
+- [CMS Build Prompt](docs/prompts/student-affairs-cms-build-prompt.md)
+- [Read-only database preflight](docs/database/read-only-preflight.sql)
 - [Authorization Matrix & RBAC](docs/architecture/authorization-matrix.md)
 - [Security Model & Threat Mitigation](docs/security/security-model.md)
 - [Functional Requirements Specification](docs/product/functional-requirements.md)

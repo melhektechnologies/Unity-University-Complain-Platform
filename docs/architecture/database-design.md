@@ -253,7 +253,7 @@ The database schema is designed to enforce:
   - `complaint_id` (UUID, FK -> `complaints(id)` ON DELETE CASCADE, NOT NULL)
   - `author_profile_id` (UUID, FK -> `profiles(id)`, NOT NULL)
   - `note` (TEXT, NOT NULL)
-  - `is_restricted` (BOOLEAN, NOT NULL, default: `false`) — Visible only to Escalation Officers if true
+  - `is_restricted` (BOOLEAN, NOT NULL, default: `false`) — Excluded from department-handler reads when true. Migration `0014` is live; complaint-related data reads are restricted to the active Student Affairs CMS role. Complaints involving the Student Dean require an out-of-platform referral procedure.
   - `created_at` (TIMESTAMPTZ, NOT NULL, default: `clock_timestamp()`)
   - `updated_at` (TIMESTAMPTZ, NOT NULL, default: `clock_timestamp()`)
 - **Indexes:** `idx_internal_notes_complaint` ON `(complaint_id, created_at ASC)`.

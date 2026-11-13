@@ -99,7 +99,7 @@ describe('Role-Based Access Control & Capability Matrix', () => {
     expect(hasCapability(systemAdmin, CAPABILITIES.MANAGE_STAFF_ROLES)).toBe(true);
   });
 
-  it('permits Student Affairs Admin and Reviewer to view all unrestricted complaints', () => {
+  it('permits only the Student Affairs CMS role to view complaints', () => {
     const complaint = {
       id: 'c-02',
       departmentId: 'dept-finance',
@@ -108,11 +108,12 @@ describe('Role-Based Access Control & Capability Matrix', () => {
     };
 
     expect(canAccessComplaint(adminUser, complaint)).toBe(true);
-    expect(canAccessComplaint(reviewerUser, complaint)).toBe(true);
-    expect(canAccessComplaint(auditor, complaint)).toBe(true);
+    expect(canAccessComplaint(reviewerUser, complaint)).toBe(false);
+    expect(canAccessComplaint(auditor, complaint)).toBe(false);
+    expect(canAccessComplaint(escalationOfficer, complaint)).toBe(false);
   });
 
-  it('enforces Department Handler cross-department isolation', () => {
+  it('keeps department handlers out of the complaint CMS', () => {
     const csComplaint = {
       id: 'c-cs-01',
       departmentId: 'dept-computer-science', // Matches handlerCs.departmentId
@@ -127,7 +128,7 @@ describe('Role-Based Access Control & Capability Matrix', () => {
       accusedParty: null,
     };
 
-    expect(canAccessComplaint(handlerCs, csComplaint)).toBe(true);
+    expect(canAccessComplaint(handlerCs, csComplaint)).toBe(false);
     expect(canAccessComplaint(handlerCs, financeComplaint)).toBe(false);
   });
 
@@ -142,12 +143,12 @@ describe('Role-Based Access Control & Capability Matrix', () => {
     expect(isHandlerAccused(handlerCs, complaintAgainstGirma.accusedParty)).toBe(true);
     expect(canAccessComplaint(handlerCs, complaintAgainstGirma)).toBe(false);
 
-    // Other authorized staff (Admin, Escalation Officer) CAN still access
+    // The designated CMS officer can review; escalation has no case access in the MVP.
     expect(canAccessComplaint(adminUser, complaintAgainstGirma)).toBe(true);
-    expect(canAccessComplaint(escalationOfficer, complaintAgainstGirma)).toBe(true);
+    expect(canAccessComplaint(escalationOfficer, complaintAgainstGirma)).toBe(false);
   });
 
-  it('quarantines Sensitive/Restricted complaints strictly to Escalation Officers', () => {
+  it('keeps Sensitive/Restricted complaints with the Student Affairs CMS officer', () => {
     const sensitiveHarassmentCase = {
       id: 'c-sens-01',
       departmentId: 'dept-computer-science',
@@ -157,15 +158,15 @@ describe('Role-Based Access Control & Capability Matrix', () => {
 
     expect(canAccessComplaint(handlerCs, sensitiveHarassmentCase)).toBe(false);
     expect(canAccessComplaint(reviewerUser, sensitiveHarassmentCase)).toBe(false);
-    expect(canAccessComplaint(adminUser, sensitiveHarassmentCase)).toBe(false);
+    expect(canAccessComplaint(adminUser, sensitiveHarassmentCase)).toBe(true);
     expect(canAccessComplaint(auditor, sensitiveHarassmentCase)).toBe(false);
     expect(canAccessComplaint(systemAdmin, sensitiveHarassmentCase)).toBe(false);
 
-    // ONLY Escalation Officer has access
-    expect(canAccessComplaint(escalationOfficer, sensitiveHarassmentCase)).toBe(true);
+    // Other staff roles, including escalation, have no direct case access in this MVP.
+    expect(canAccessComplaint(escalationOfficer, sensitiveHarassmentCase)).toBe(false);
   });
 
-  it('enforces Confidential Student Identity protection', () => {
+  it('limits complaint identity access to the Student Affairs CMS officer', () => {
     const complaint = {
       departmentId: 'dept-computer-science',
       isRestrictedSensitive: false,
@@ -175,20 +176,20 @@ describe('Role-Based Access Control & Capability Matrix', () => {
     const confidentialIdentity = { isConfidential: true };
     const identifiedIdentity = { isConfidential: false };
 
-    // Identified: Admin, Escalation Officer, Reviewer, and assigned Handler can see
+    // The sole CMS role can see complaint identity for case management.
     expect(canAccessIdentity(adminUser, complaint, identifiedIdentity)).toBe(true);
-    expect(canAccessIdentity(escalationOfficer, complaint, identifiedIdentity)).toBe(true);
-    expect(canAccessIdentity(reviewerUser, complaint, identifiedIdentity)).toBe(true);
-    expect(canAccessIdentity(handlerCs, complaint, identifiedIdentity)).toBe(true);
+    expect(canAccessIdentity(escalationOfficer, complaint, identifiedIdentity)).toBe(false);
+    expect(canAccessIdentity(reviewerUser, complaint, identifiedIdentity)).toBe(false);
+    expect(canAccessIdentity(handlerCs, complaint, identifiedIdentity)).toBe(false);
 
     // Confidential: Handler and Reviewer are STRICTLY BLOCKED; only Admin and Escalation Officer can see
     expect(canAccessIdentity(handlerCs, complaint, confidentialIdentity)).toBe(false);
     expect(canAccessIdentity(reviewerUser, complaint, confidentialIdentity)).toBe(false);
     expect(canAccessIdentity(adminUser, complaint, confidentialIdentity)).toBe(true);
-    expect(canAccessIdentity(escalationOfficer, complaint, confidentialIdentity)).toBe(true);
+    expect(canAccessIdentity(escalationOfficer, complaint, confidentialIdentity)).toBe(false);
   });
 
-  it('enforces Internal Notes Airgap and restricted note protections', () => {
+  it('limits complaint internal notes to the Student Affairs CMS officer', () => {
     const complaint = {
       departmentId: 'dept-computer-science',
       isRestrictedSensitive: false,
@@ -198,13 +199,13 @@ describe('Role-Based Access Control & Capability Matrix', () => {
     const standardNote = { isRestricted: false };
     const restrictedNote = { isRestricted: true };
 
-    // Standard internal note: Admin, Escalation, Auditor, and Department Handler can view
+    // Both standard and restricted notes remain within the one-officer CMS.
     expect(canAccessInternalNotes(adminUser, complaint, standardNote)).toBe(true);
-    expect(canAccessInternalNotes(escalationOfficer, complaint, standardNote)).toBe(true);
-    expect(canAccessInternalNotes(handlerCs, complaint, standardNote)).toBe(true);
+    expect(canAccessInternalNotes(escalationOfficer, complaint, standardNote)).toBe(false);
+    expect(canAccessInternalNotes(handlerCs, complaint, standardNote)).toBe(false);
 
-    // Restricted internal note (e.g. legal deliberations): ONLY Escalation Officer can view
-    expect(canAccessInternalNotes(adminUser, complaint, restrictedNote)).toBe(false);
+    // Restricted notes follow the same single-recipient rule.
+    expect(canAccessInternalNotes(adminUser, complaint, restrictedNote)).toBe(true);
     expect(canAccessInternalNotes(handlerCs, complaint, restrictedNote)).toBe(false);
     expect(canAccessInternalNotes(escalationOfficer, complaint, restrictedNote)).toBe(true);
   });

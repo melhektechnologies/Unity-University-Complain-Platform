@@ -8,6 +8,16 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  const pathname = request.nextUrl.pathname;
+  const isAdminPage = pathname.startsWith('/admin') && !pathname.startsWith('/admin/login');
+  const isLoginPage = pathname === '/admin/login';
+
+  // Public student pages do not need an Auth request. Keep them fast and
+  // available even if the identity provider is temporarily unreachable.
+  if (!isAdminPage && !isLoginPage) {
+    return response;
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder-anon-key';
 
@@ -41,10 +51,8 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const pathname = request.nextUrl.pathname;
-
   // Protect administrative routes: /admin/* (except /admin/login)
-  if (pathname.startsWith('/admin') && !pathname.startsWith('/admin/login')) {
+  if (isAdminPage) {
     if (!user) {
       const loginUrl = new URL('/admin/login', request.url);
       loginUrl.searchParams.set('redirectTo', pathname);
@@ -53,7 +61,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // If authenticated user visits /admin/login, redirect to /admin/dashboard
-  if (pathname === '/admin/login' && user) {
+  if (isLoginPage && user) {
     return NextResponse.redirect(new URL('/admin/dashboard', request.url));
   }
 

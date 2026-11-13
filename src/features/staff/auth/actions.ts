@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from '../../../lib/supabase/server';
 import { createAdminClient } from '../../../lib/supabase/admin';
 import { recordAuditLog } from '../../../lib/audit/logger';
-import type { StaffUserContext, SystemRole } from '../../../lib/auth/roles';
+import { SYSTEM_ROLES, type StaffUserContext, type SystemRole } from '../../../lib/auth/roles';
 
 export interface SignInResult {
   success: boolean;
@@ -35,36 +35,31 @@ export async function signInStaffAction(
     };
   }
 
-  // 2. Disabled Account Handling (Query profile.is_active)
-  const admin = createAdminClient();
-  const { data: profile, error: profileError } = await admin
-    .from('profiles')
-    .select('id, full_name, is_active, department_id')
-    .eq('id', authData.user.id)
-    .single();
-
-  if (profileError || !profile || !profile.is_active) {
-    // Immediately invalidate session for deactivated accounts
+  // Active profile and Student Affairs role are both required for the CMS.
+  const staff = await getStudentAffairsContext();
+  if (!staff) {
     await supabase.auth.signOut();
     return {
       success: false,
-      error: 'Your staff account has been deactivated. Please contact the System Administrator.',
+      error: 'This account is not authorized for the Student Affairs workspace.',
     };
   }
+
+  const admin = createAdminClient();
 
   // 3. Update last_login_at
   await admin
     .from('profiles')
     .update({ last_login_at: new Date().toISOString() })
-    .eq('id', profile.id);
+    .eq('id', staff.id);
 
   // 4. Audit Successful Login
   await recordAuditLog({
-    actorProfileId: profile.id,
-    actorRole: 'staff',
+    actorProfileId: staff.id,
+    actorRole: SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN,
     action: 'STAFF_LOGIN_SUCCESS',
     entityTable: 'profiles',
-    entityId: profile.id,
+    entityId: staff.id,
     ipAddress: clientIp || null,
   });
 
@@ -93,7 +88,7 @@ export async function signOutStaffAction(profileId?: string): Promise<{ success:
 
 /**
  * Server-side helper to load the active authenticated staff profile and roles.
- * Returns null if not authenticated or if the profile is deactivated.
+ * Use getStudentAffairsContext for every CMS page and mutation.
  */
 export async function getCurrentStaffContext(): Promise<StaffUserContext | null> {
   const supabase = await createServerSupabaseClient();
@@ -117,10 +112,12 @@ export async function getCurrentStaffContext(): Promise<StaffUserContext | null>
     return null;
   }
 
-  const { data: userRoles } = await admin
+  const { data: userRoles, error: rolesError } = await admin
     .from('user_roles')
     .select('role_id')
     .eq('profile_id', profile.id);
+
+  if (rolesError) return null;
 
   const roles = (userRoles || []).map((r) => r.role_id as SystemRole);
 
@@ -132,5 +129,12 @@ export async function getCurrentStaffContext(): Promise<StaffUserContext | null>
     isActive: profile.is_active,
     roles,
   };
+}
+
+/** Return a context only for an active profile assigned to the MVP CMS role. */
+export async function getStudentAffairsContext(): Promise<StaffUserContext | null> {
+  const staff = await getCurrentStaffContext();
+  if (!staff || !staff.roles.includes(SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN)) return null;
+  return staff;
 }
 

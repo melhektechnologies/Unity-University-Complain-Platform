@@ -32,49 +32,24 @@ All operational tables have PostgreSQL Row Level Security enabled (`ALTER TABLE 
 ### 3.1 RLS Policies by Entity
 
 #### Entity: `complaints`
+**Live MVP rules (source of truth: migrations `0007` and `0013`):**
+
+- Anonymous/public clients have no direct `SELECT` policy on complaints. Tracking is mediated by the server after reference/passcode verification.
+- Current live `0007` policies allow active escalation officers to read all complaints and grant other roles access to some case-related tables. The single-receiver boundary is not complete yet.
+- Migration `0013` adds the following all-complaint read policy for the active Student Affairs officer:
+
 ```sql
--- Helper function to extract authenticated staff user's roles
-CREATE OR REPLACE FUNCTION auth.current_staff_roles()
-RETURNS TABLE (role_id VARCHAR) AS $$
-  SELECT role_id FROM public.user_roles 
-  WHERE profile_id = auth.uid();
-$$ LANGUAGE sql STABLE SECURITY DEFINER;
-
--- 1. Public Student Access: Read own complaint via valid tracking reference
--- Note: Evaluated during server-side scoped client lookup
-CREATE POLICY "Public students can view their single complaint via tracking"
-ON public.complaints FOR SELECT
-TO anon, authenticated
-USING (
-  tracking_number = current_setting('request.jwt.claims', true)::json->>'tracking_number'
-);
-
--- 2. Staff Access: Non-restricted complaints
-CREATE POLICY "Staff can view non-restricted complaints"
-ON public.complaints FOR SELECT
-TO authenticated
-USING (
-  is_restricted_sensitive = false
-  AND (
-    -- Admins, Reviewers, Escalation Officers, Auditors see all non-restricted
-    EXISTS (SELECT 1 FROM auth.current_staff_roles() r WHERE r.role_id IN ('student_affairs_admin', 'complaint_reviewer', 'escalation_officer', 'auditor'))
-    -- Department Handlers see only their department
-    OR (
-      EXISTS (SELECT 1 FROM auth.current_staff_roles() r WHERE r.role_id = 'department_handler')
-      AND department_id = (SELECT department_id FROM public.profiles WHERE id = auth.uid())
-    )
-  )
-);
-
--- 3. Restricted Sensitive Complaints: Escalation Officers only
-CREATE POLICY "Only Escalation Officers can view restricted sensitive complaints"
-ON public.complaints FOR SELECT
-TO authenticated
-USING (
-  is_restricted_sensitive = true
-  AND EXISTS (SELECT 1 FROM auth.current_staff_roles() r WHERE r.role_id = 'escalation_officer')
-);
+CREATE POLICY complaints_student_affairs_all_read
+  ON public.complaints
+  FOR SELECT
+  TO authenticated
+  USING (
+    public.is_active_staff()
+    AND public.has_role('student_affairs_admin')
+  );
 ```
+
+PostgreSQL combines permissive SELECT policies. Migration `0014_student_affairs_only_receiver.sql` removes legacy staff case-data access and limits case handling to the active `student_affairs_admin` role. A live catalog check on 2026-11-14 confirmed the migration record, row-level security on all nine case tables, one active Student Affairs account, Student Affairs-only complaint read/update policies, and no anonymous/public complaint read policy. Complaints involving the Student Dean need an out-of-platform university referral process.
 
 #### Entity: `complaint_identities` (PII Decoupling & Confidentiality)
 ```sql

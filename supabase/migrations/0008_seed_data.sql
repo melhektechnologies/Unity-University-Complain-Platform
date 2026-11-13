@@ -102,90 +102,55 @@ ON CONFLICT (code) DO NOTHING;
 -- ---------------------------------------------------------------------------
 
 -- Campuses
-WITH campus_insert AS (
-  INSERT INTO public.campuses (name, code) VALUES
-    ('Main Campus (Gerji)',   'GERJI'),
-    ('Megenagna Campus',      'MEGENAGNA'),
-    ('Bole Campus',           'BOLE')
-  ON CONFLICT (code) DO NOTHING
-  RETURNING id, code
-)
+INSERT INTO public.campuses (name, code) VALUES
+  ('Main Campus (Gerji)',   'GERJI'),
+  ('Megenagna Campus',      'MEGENAGNA'),
+  ('Bole Campus',           'BOLE')
+ON CONFLICT (code) DO NOTHING;
 
--- Faculties (linked to campuses via subquery)
--- [PLACEHOLDER] Faculty names require confirmation
+-- Faculties / units under Gerji (placeholder taxonomy for lean ops)
 INSERT INTO public.faculties (campus_id, name, code)
 SELECT
   c.id,
   f.name,
   f.code
 FROM (VALUES
-  ('GERJI', 'Faculty of Technology & Informatics',    'TECH'),
-  ('GERJI', 'Faculty of Business & Economics',        'BUS'),
-  ('GERJI', 'Faculty of Health Sciences',             'HEALTH'),
-  ('GERJI', 'Faculty of Social Sciences & Humanities','SOCSCI'),
-  ('GERJI', 'Faculty of Natural Sciences',            'NATSCI'),
-  ('GERJI', 'Office of the Registrar',                'REGISTRAR'),
-  ('GERJI', 'Finance & Student Accounts',             'FINANCE'),
-  ('GERJI', 'Student Affairs Directorate',            'STUDENT_AFFAIRS'),
-  ('GERJI', 'Campus Operations & Facilities',         'FACILITIES')
+  ('GERJI', 'Faculty of Technology & Informatics',     'TECH'),
+  ('GERJI', 'Faculty of Business & Economics',         'BUS'),
+  ('GERJI', 'Faculty of Health Sciences',              'HEALTH'),
+  ('GERJI', 'Faculty of Social Sciences & Humanities', 'SOCSCI'),
+  ('GERJI', 'Faculty of Natural Sciences',             'NATSCI'),
+  ('GERJI', 'Office of the Registrar',                 'REGISTRAR'),
+  ('GERJI', 'Finance & Student Accounts',              'FINANCE'),
+  ('GERJI', 'Student Affairs Directorate',             'STUDENT_AFFAIRS'),
+  ('GERJI', 'Campus Operations & Facilities',          'FACILITIES')
 ) AS f(campus_code, name, code)
 JOIN public.campuses c ON c.code = f.campus_code
 ON CONFLICT (campus_id, code) DO NOTHING;
 
--- [PLACEHOLDER] Departments — requires confirmation from academic registrar
--- Inserting representative examples; must be expanded with full roster
-DO $$
-DECLARE
-  v_tech_id      UUID;
-  v_bus_id       UUID;
-  v_health_id    UUID;
-  v_registrar_id UUID;
-  v_finance_id   UUID;
-  v_affairs_id   UUID;
-  v_facilities_id UUID;
-BEGIN
-  SELECT id INTO v_tech_id       FROM public.faculties WHERE code = 'TECH';
-  SELECT id INTO v_bus_id        FROM public.faculties WHERE code = 'BUS';
-  SELECT id INTO v_health_id     FROM public.faculties WHERE code = 'HEALTH';
-  SELECT id INTO v_registrar_id  FROM public.faculties WHERE code = 'REGISTRAR';
-  SELECT id INTO v_finance_id    FROM public.faculties WHERE code = 'FINANCE';
-  SELECT id INTO v_affairs_id    FROM public.faculties WHERE code = 'STUDENT_AFFAIRS';
-  SELECT id INTO v_facilities_id FROM public.faculties WHERE code = 'FACILITIES';
-
-  -- Technology
-  INSERT INTO public.departments (faculty_id, name, code, head_title) VALUES
-    (v_tech_id, 'Department of Computer Science',       'CS',       'Department Chair'),
-    (v_tech_id, 'Department of Information Technology', 'IT',       'Department Chair'),
-    (v_tech_id, 'Department of Software Engineering',   'SE',       'Department Chair'),
-    (v_tech_id, 'Department of Electrical Engineering', 'EE',       'Department Chair')
-  ON CONFLICT (faculty_id, code) DO NOTHING;
-
-  -- Business
-  INSERT INTO public.departments (faculty_id, name, code, head_title) VALUES
-    (v_bus_id, 'Department of Accounting & Finance',    'ACCTFIN',  'Department Chair'),
-    (v_bus_id, 'Department of Management',              'MGMT',     'Department Chair'),
-    (v_bus_id, 'Department of Economics',               'ECON',     'Department Chair'),
-    (v_bus_id, 'Department of Marketing',               'MKT',      'Department Chair')
-  ON CONFLICT (faculty_id, code) DO NOTHING;
-
-  -- Health Sciences
-  INSERT INTO public.departments (faculty_id, name, code, head_title) VALUES
-    (v_health_id, 'Department of Public Health',        'PUBHEALTH', 'Department Chair'),
-    (v_health_id, 'Department of Nursing',              'NURSING',   'Department Chair'),
-    (v_health_id, 'Department of Pharmacy',             'PHARM',     'Department Chair')
-  ON CONFLICT (faculty_id, code) DO NOTHING;
-
-  -- Administrative Units
-  INSERT INTO public.departments (faculty_id, name, code, head_title) VALUES
-    (v_registrar_id,  'Registrar Office',                'REG_OFFICE', 'University Registrar'),
-    (v_finance_id,    'Student Accounts Office',         'STU_ACCTS',  'Head of Student Accounts'),
-    (v_affairs_id,    'Student Affairs Office',          'STU_AFF',    'Director of Student Affairs'),
-    (v_facilities_id, 'Campus Operations & Maintenance', 'OPS_MAINT',  'Facilities Manager'),
-    (v_facilities_id, 'Library & Learning Resources',    'LIBRARY',    'Head Librarian')
-  ON CONFLICT (faculty_id, code) DO NOTHING;
-
-END;
-$$;
+-- Departments — only insert when faculty rows exist (avoids null faculty_id)
+INSERT INTO public.departments (faculty_id, name, code, head_title)
+SELECT fac.id, d.name, d.code, d.head_title
+FROM (VALUES
+  ('TECH', 'Department of Computer Science', 'CS', 'Department Chair'),
+  ('TECH', 'Department of Information Technology', 'IT', 'Department Chair'),
+  ('TECH', 'Department of Software Engineering', 'SE', 'Department Chair'),
+  ('TECH', 'Department of Electrical Engineering', 'EE', 'Department Chair'),
+  ('BUS', 'Department of Accounting & Finance', 'ACCTFIN', 'Department Chair'),
+  ('BUS', 'Department of Management', 'MGMT', 'Department Chair'),
+  ('BUS', 'Department of Economics', 'ECON', 'Department Chair'),
+  ('BUS', 'Department of Marketing', 'MKT', 'Department Chair'),
+  ('HEALTH', 'Department of Public Health', 'PUBHEALTH', 'Department Chair'),
+  ('HEALTH', 'Department of Nursing', 'NURSING', 'Department Chair'),
+  ('HEALTH', 'Department of Pharmacy', 'PHARM', 'Department Chair'),
+  ('REGISTRAR', 'Registrar Office', 'REG_OFFICE', 'University Registrar'),
+  ('FINANCE', 'Student Accounts Office', 'STU_ACCTS', 'Head of Student Accounts'),
+  ('STUDENT_AFFAIRS', 'Student Affairs Office', 'STU_AFF', 'Director of Student Affairs'),
+  ('FACILITIES', 'Campus Operations & Maintenance', 'OPS_MAINT', 'Facilities Manager'),
+  ('FACILITIES', 'Library & Learning Resources', 'LIBRARY', 'Head Librarian')
+) AS d(faculty_code, name, code, head_title)
+JOIN public.faculties fac ON fac.code = d.faculty_code
+ON CONFLICT (faculty_id, code) DO NOTHING;
 
 -- ---------------------------------------------------------------------------
 -- 4. System Settings (Configurable Operational Defaults)

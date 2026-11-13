@@ -1,7 +1,6 @@
 import {
   SYSTEM_ROLES,
   ROLE_CAPABILITIES,
-  type SystemRole,
   type Capability,
   type StaffUserContext,
 } from './roles';
@@ -72,50 +71,15 @@ export function isHandlerAccused(user: StaffUserContext, accusedParty: string | 
  */
 export function canAccessComplaint(
   user: StaffUserContext,
-  complaint: {
+  _complaint: {
     id: string;
     departmentId: string;
     isRestrictedSensitive: boolean;
     accusedParty: string | null;
   }
 ): boolean {
-  if (!user.isActive) {
-    return false;
-  }
-
-  // System admin has zero access to complaint contents by design
-  if (user.roles.length === 1 && user.roles[0] === SYSTEM_ROLES.SYSTEM_ADMIN) {
-    return false;
-  }
-
-  // Restricted Sensitive: ONLY escalation officers
-  if (complaint.isRestrictedSensitive) {
-    return user.roles.includes(SYSTEM_ROLES.ESCALATION_OFFICER);
-  }
-
-  // Escalation Officer, Admin, Reviewer, Auditor can view all non-restricted
-  const unrestrictedRoles: SystemRole[] = [
-    SYSTEM_ROLES.ESCALATION_OFFICER,
-    SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN,
-    SYSTEM_ROLES.COMPLAINT_REVIEWER,
-    SYSTEM_ROLES.AUDITOR,
-  ];
-  if (user.roles.some((r) => unrestrictedRoles.includes(r))) {
-    return true;
-  }
-
-  // Department Handler: only assigned department, AND not cited as accused party
-  if (user.roles.includes(SYSTEM_ROLES.DEPARTMENT_HANDLER)) {
-    if (user.departmentId !== complaint.departmentId) {
-      return false;
-    }
-    if (isHandlerAccused(user, complaint.accusedParty)) {
-      return false; // Conflict of interest quarantine
-    }
-    return true;
-  }
-
-  return false;
+  // The one-officer MVP keeps every complaint inside the Student Affairs CMS.
+  return user.isActive && user.roles.includes(SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN);
 }
 
 /**
@@ -132,45 +96,10 @@ export function canAccessIdentity(
     isConfidential: boolean;
   }
 ): boolean {
-  if (!user.isActive) {
-    return false;
-  }
-
-  // Confidential complaints: ONLY Student Affairs Admin and Escalation Officer
-  const confidentialRoles: SystemRole[] = [
-    SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN,
-    SYSTEM_ROLES.ESCALATION_OFFICER,
-  ];
-  if (identity.isConfidential) {
-    return user.roles.some((r) => confidentialRoles.includes(r));
-  }
-
-  // Non-confidential (Identified):
-  // Admins, Escalation Officers, and Reviewers can view
-  const identifiedRoles: SystemRole[] = [
-    SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN,
-    SYSTEM_ROLES.ESCALATION_OFFICER,
-    SYSTEM_ROLES.COMPLAINT_REVIEWER,
-  ];
-  if (user.roles.some((r) => identifiedRoles.includes(r))) {
-    return true;
-  }
-
-  // Department Handler can view ONLY if non-restricted, matches department, and NOT accused
-  if (user.roles.includes(SYSTEM_ROLES.DEPARTMENT_HANDLER)) {
-    if (complaint.isRestrictedSensitive) {
-      return false;
-    }
-    if (user.departmentId !== complaint.departmentId) {
-      return false;
-    }
-    if (isHandlerAccused(user, complaint.accusedParty)) {
-      return false;
-    }
-    return true;
-  }
-
-  return false;
+  void complaint;
+  void identity;
+  // Student Affairs is the sole CMS receiver in this MVP.
+  return user.isActive && user.roles.includes(SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN);
 }
 
 /**
@@ -187,41 +116,8 @@ export function canAccessInternalNotes(
     isRestricted: boolean;
   }
 ): boolean {
-  if (!user.isActive) {
-    return false;
-  }
-
-  // If the note itself is restricted: ONLY escalation officers
-  if (note.isRestricted) {
-    return user.roles.includes(SYSTEM_ROLES.ESCALATION_OFFICER);
-  }
-
-  // If the complaint is sensitive: ONLY escalation officers
-  if (complaint.isRestrictedSensitive) {
-    return user.roles.includes(SYSTEM_ROLES.ESCALATION_OFFICER);
-  }
-
-  // Admins, Escalation Officers, Reviewers, Auditors see all non-restricted notes
-  const notesRoles: SystemRole[] = [
-    SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN,
-    SYSTEM_ROLES.ESCALATION_OFFICER,
-    SYSTEM_ROLES.COMPLAINT_REVIEWER,
-    SYSTEM_ROLES.AUDITOR,
-  ];
-  if (user.roles.some((r) => notesRoles.includes(r))) {
-    return true;
-  }
-
-  // Department Handlers see notes for their department if not accused
-  if (user.roles.includes(SYSTEM_ROLES.DEPARTMENT_HANDLER)) {
-    if (user.departmentId !== complaint.departmentId) {
-      return false;
-    }
-    if (isHandlerAccused(user, complaint.accusedParty)) {
-      return false;
-    }
-    return true;
-  }
-
-  return false;
+  void complaint;
+  void note;
+  // The one-officer MVP has no reviewer or department-handler case access.
+  return user.isActive && user.roles.includes(SYSTEM_ROLES.STUDENT_AFFAIRS_ADMIN);
 }

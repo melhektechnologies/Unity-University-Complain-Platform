@@ -288,6 +288,7 @@
    - Standard Department Handlers and general Reviewers querying `/admin/complaints` cannot see this record.
    - The case does NOT route to the accused department.
    - The case routes exclusively to the "Restricted Grievance Committee" (Senior Escalation Officers).
+   - **Live MVP note (verified 2026-11-14):** Migration `0014` restricts case-data reads to the active Student Affairs role; the live policy catalog showed no anonymous/public complaint read policy. The Student Dean is the only CMS receiver; conflict referrals occur outside the platform.
 4. **Investigation:** Conducted under strict privacy; all internal notes and evidence are partitioned.
 
 ---

@@ -26,18 +26,18 @@ Authorization in Unity Student Support operates across seven subject identities:
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Submit New Complaint** | **Allowed** | Denied (Public) | Denied (Public) | Denied (Public) | Denied (Public) | Denied | Denied |
 | **Track Complaint via Key** | **Own Case Only** | Denied (Use CMS) | Denied (Use CMS) | Denied (Use CMS) | Denied (Use CMS) | Denied | Denied |
-| **View Unrestricted Complaint Narrative** | **Own Case Only** | All Cases | All Cases | **Assigned Dept Only** | All Cases | Denied | De-identified |
-| **View Restricted / Sensitive Cases** | Denied | Denied | Denied | Denied | **Full Access** | Denied | Denied |
-| **View Complainant PII (Identified)** | **Own Case Only** | View | View | **Assigned Case Only** | View | Denied | Masked |
-| **View Complainant PII (Confidential)**| **Own Case Only** | Denied | **Authorized** | **STRICTLY BLOCKED** | **Authorized** | Denied | Masked |
+| **View Unrestricted Complaint Narrative** | **Own Case via verified tracking** | Denied | **Full Access (CMS)** | Denied | Denied | Denied | Denied |
+| **View Restricted / Sensitive Cases** | Denied | Denied | **Full Access (CMS)** | Denied | Denied | Denied | Denied |
+| **View Complainant PII (Identified)** | **Own details not shown in tracking** | Denied | **Authorized** | Denied | Denied | Denied | Denied |
+| **View Complainant PII (Confidential)**| Denied | Denied | **Authorized** | Denied | Denied | Denied | Denied |
 | **View Complainant PII (Anonymous)** | N/A (None) | None Exists | None Exists | None Exists | None Exists | None Exists | None Exists |
-| **Triage / Categorize Case** | Denied | Preliminary | **Authorized** | Denied | **Override** | Denied | Denied |
-| **Assign / Reassign Department** | Denied | Propose | **Authorized** | Denied | **Override** | Denied | Denied |
+| **Triage / Categorize Case** | Denied | Denied | **Authorized** | Denied | Denied | Denied | Denied |
+| **Assign / Reassign Department** | Denied | Denied | **Authorized** | Denied | Denied | Denied | Denied |
 | **Assign Individual Case Handler** | Denied | Denied | **Authorized** | **Within Own Dept** | **Override** | Denied | Denied |
-| **Read Internal Investigation Notes** | **STRICTLY BLOCKED** | Read | Read | **Assigned Case Only** | Read All | Denied | Read All |
-| **Write Internal Investigation Notes** | Denied | Write | Write | **Assigned Case Only** | Write | Denied | Denied |
-| **Draft Student-Facing Response** | Denied | Draft Only | Draft & Publish | Draft (Review req.*) | Draft & Publish | Denied | Denied |
-| **Publish Student-Facing Response** | Denied | Denied | **Authorized** | If Authorized* | **Authorized** | Denied | Denied |
+| **Read Internal Investigation Notes** | **STRICTLY BLOCKED** | Denied | Read All | Denied | Denied | Denied | Denied |
+| **Write Internal Investigation Notes** | Denied | Denied | Write | Denied | Denied | Denied | Denied |
+| **Draft Student-Facing Response** | Denied | Denied | Draft & Publish | Denied | Denied | Denied | Denied |
+| **Publish Student-Facing Response** | Denied | Denied | **Authorized** | Denied | Denied | Denied | Denied |
 | **Submit Clarification (as Student)** | **If Awaiting** | Denied | Denied | Denied | Denied | Denied | Denied |
 | **Escalate Case to Senior Leadership** | Denied | Propose | **Authorized** | **Authorized** | **Authorized** | Denied | Denied |
 | **Resolve Case** | Denied | Denied | **Authorized** | Propose Resolution | **Authorized** | Denied | Denied |
@@ -46,9 +46,11 @@ Authorization in Unity Student Support operates across seven subject identities:
 | **Manage Staff Roles & Profiles** | Denied | Denied | Denied | Denied | Denied | **Authorized** | Denied |
 | **Manage Categories & Taxonomy** | Denied | Denied | Denied | Denied | Denied | **Authorized** | Denied |
 | **View Operational Reports & Metrics** | Denied | Basic | Full | Department Only | Full Executive | System Level | Full Audit |
-| **Inspect System Audit Logs** | Denied | Denied | Case Level Only | Denied | Case Level Only | **System Level** | **Full System** |
+| **Inspect System Audit Logs** | Denied | Denied | Case Level Only | Denied | Denied | Non-case only | Non-case only |
 
 *\*Note: Publishing rights for department handlers are governed by `system_settings.require_admin_approval_for_responses`.*
+
+**MVP policy (verified live 2026-11-14):** The Student Dean is the only complaint receiver through the Student Affairs CMS. Migration `0014` removes legacy direct case access for other staff roles. Live catalog checks confirmed row-level security on all nine case tables, one active Student Affairs account, Student Affairs-only complaint read/update policies, and no anonymous/public complaint read policy. The CMS has no second recipient or recusal workflow, so the university needs an out-of-platform procedure for complaints involving the Student Dean.
 
 ---
 

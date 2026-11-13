@@ -39,8 +39,8 @@
 - **User Role:** Public Student / Complainant
 - **Preconditions:** User is on Step 1 of the submission wizard.
 - **Expected Behavior:**
-  - **Identified:** System requires Full Name, Student ID Number, University/Personal Email, and Phone Number. All assigned reviewers and department handlers can see this information.
-  - **Confidential:** System requires Full Name, Student ID Number, Email, and Phone Number. System stores a flag `is_confidential = true`. Only Student Affairs Admins and Escalation Officers can view complainant PII. Department Handlers see `[CONFIDENTIAL COMPLAINANT - IDENTITY SEALED]`.
+  - **Identified:** System requires Full Name, Student ID Number, University/Personal Email, and Phone Number. In the MVP, only the active Student Affairs CMS account can view these details.
+  - **Confidential:** System requires Full Name, Student ID Number, Email, and Phone Number. System stores a flag `is_confidential = true`. In the MVP, only the active Student Affairs CMS account can view complainant PII; other staff roles have no case-data access.
   - **Anonymous:** System hides all identity fields. Server ensures `student_name`, `student_id`, `email`, and `phone` are recorded as `NULL`. Client IP is hashed/salted or discarded from the complaint table.
 - **Validation Rules:**
   - If `IDENTIFIED` or `CONFIDENTIAL`:
@@ -175,7 +175,7 @@
 - **Expected Behavior:**
   - Department handlers can only fetch complaints where `department_id = staff.department_id`.
   - Only `system_admin` can access `/admin/settings` and `/admin/team`.
-  - Only `escalation_officer` and `system_admin` can view `restricted_sensitive` cases.
+  - MVP access is only the active `student_affairs_admin` role through the CMS. Migration `0014` is applied; the live catalog check confirmed the single-receiver read boundary.
   - Direct URL access to unauthorized pages returns HTTP 403 Forbidden or redirects to `/admin/dashboard` with an error toast.
 - **Acceptance Criteria:**
   - Attempting to query another department's complaint ID as a `department_handler` fails with 403 / Not Found.
@@ -295,10 +295,12 @@
 - **Expected Behavior:**
   1. Authorized officer toggles `is_restricted_sensitive = true`.
   2. The complaint is immediately removed from general queues and department views.
-  3. Only users with `role: escalation_officer` or specific access grants can view the dossier.
+  3. In the one-receiver MVP, only the active Student Affairs CMS account can view the dossier; other staff roles are reserved for a future phase.
 - **Acceptance Criteria:**
   - Standard department handlers receive 404/403 when querying a restricted case.
   - Case appears only in the "Restricted Cases" tab for authorized leadership.
+
+**Current MVP policy (verified live 2026-11-14):** Migration `0014_student_affairs_only_receiver.sql` restricts case-data access to the active Student Affairs CMS role; anonymous/public complaint reads remain blocked. Complaints involving the Student Dean must follow a university referral process outside this CMS.
 
 ---
 

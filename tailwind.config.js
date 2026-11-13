@@ -16,9 +16,7 @@ module.exports = {
       },
     },
     extend: {
-      // ── CSS-variable-based color system (shadcn/ui compatible) ─────────────
       colors: {
-        // shadcn/ui semantic tokens
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
@@ -52,33 +50,35 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
-        // ── Institutional brand palette ──────────────────────────────────────
-        institutional: {
-          navy: '#1B365D',      // Primary — headers, nav, prominent CTAs
-          'navy-light': '#2A4A7F', // Hover state for navy elements
-          teal: '#008080',      // Accent — links, highlights, secondary actions
-          'teal-light': '#0D9488', // Hover state for teal elements
-          accent: '#0E7490',    // Alternative accent (cyan-700)
-          dark: '#0F172A',      // Near-black body text
-          surface: '#F8FAFC',   // Page background
-          'surface-raised': '#FFFFFF', // Card/panel background
-          muted: '#64748B',     // Muted text (slate-500)
-          'muted-bg': '#F1F5F9', // Muted backgrounds (slate-100)
-          border: '#E2E8F0',    // Default borders (slate-200)
+        university: {
+          indigo: 'hsl(var(--university-indigo))',
+          'indigo-deep': 'hsl(var(--university-indigo-deep))',
+          gold: 'hsl(var(--university-gold))',
+          'gold-soft': 'hsl(var(--university-gold-soft))',
         },
-        // ── Status colours ───────────────────────────────────────────────────
+        institutional: {
+          navy: '#302E83',
+          'navy-light': '#252367',
+          teal: '#008080',
+          'teal-light': '#0D9488',
+          accent: '#0E7490',
+          dark: '#0F172A',
+          surface: '#FAF8F5',
+          'surface-raised': '#FFFFFF',
+          muted: '#64748B',
+          'muted-bg': '#F1F5F9',
+          border: '#E2E8F0',
+        },
         status: {
-          // Complaint lifecycle
-          submitted: { DEFAULT: '#3B82F6', fg: '#EFF6FF' },   // blue
-          'under-review': { DEFAULT: '#8B5CF6', fg: '#F5F3FF' }, // violet
-          assigned: { DEFAULT: '#F59E0B', fg: '#FFFBEB' },    // amber
-          'in-progress': { DEFAULT: '#0EA5E9', fg: '#F0F9FF' }, // sky
-          'pending-info': { DEFAULT: '#D97706', fg: '#FEF3C7' }, // amber-dark
-          escalated: { DEFAULT: '#EF4444', fg: '#FEF2F2' },   // red
-          resolved: { DEFAULT: '#10B981', fg: '#ECFDF5' },    // emerald
-          closed: { DEFAULT: '#6B7280', fg: '#F9FAFB' },      // gray
-          reopened: { DEFAULT: '#F97316', fg: '#FFF7ED' },    // orange
-          // Priority
+          submitted: { DEFAULT: '#3B82F6', fg: '#EFF6FF' },
+          'under-review': { DEFAULT: '#8B5CF6', fg: '#F5F3FF' },
+          assigned: { DEFAULT: '#F59E0B', fg: '#FFFBEB' },
+          'in-progress': { DEFAULT: '#0EA5E9', fg: '#F0F9FF' },
+          'pending-info': { DEFAULT: '#D97706', fg: '#FEF3C7' },
+          escalated: { DEFAULT: '#EF4444', fg: '#FEF2F2' },
+          resolved: { DEFAULT: '#10B981', fg: '#ECFDF5' },
+          closed: { DEFAULT: '#6B7280', fg: '#F9FAFB' },
+          reopened: { DEFAULT: '#F97316', fg: '#FFF7ED' },
           low: { DEFAULT: '#6B7280', fg: '#F9FAFB' },
           medium: { DEFAULT: '#3B82F6', fg: '#EFF6FF' },
           high: { DEFAULT: '#F59E0B', fg: '#FFFBEB' },
@@ -91,14 +91,9 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-      },
-      fontSize: {
-        // Accessible minimum sizes
-        'body-sm': ['0.875rem', { lineHeight: '1.5rem' }],
-        body: ['1rem', { lineHeight: '1.75rem' }],
-        'body-lg': ['1.125rem', { lineHeight: '1.875rem' }],
+        sans: ['var(--font-sans)', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        serif: ['ui-serif', 'Georgia', 'Cambria', 'Times New Roman', 'Times', 'serif'],
+        mono: ['var(--font-mono)', 'JetBrains Mono', 'Fira Code', 'monospace'],
       },
       keyframes: {
         'accordion-down': {

@@ -128,7 +128,7 @@ The complaint lifecycle is governed by an explicit state machine. Arbitrary stat
 | **ESCALATED** | `IN_PROGRESS`, `RESOLVED`, `CLOSED` | Escalation Officer | Senior resolution directive issued. |
 | **RESOLVED** | `CLOSED`, `REOPENED` | Student Affairs Admin, Escalation Officer | Resolution summary and public notice published. |
 | **CLOSED** | `REOPENED` | Student Affairs Admin, Escalation Officer | Documented reopening justification. |
-| **REOPENED** | `UNDER_REVIEW`, `ASSIGNED` | Student Affairs Admin, Escalation Officer | Treated as urgent active case. |
+| **REOPENED** | `UNDER_REVIEW`, `ASSIGNED` | Student Affairs Admin | Treated as urgent active case in the one-receiver MVP. |
 
 ---
 

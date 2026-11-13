@@ -7,10 +7,9 @@ import {
   verifyPasscode,
   defaultTrackingLimiter,
 } from '../../lib/tracking/credentials';
+import { toPublicStatus } from '../../lib/complaints/status';
 
 export interface PublicComplaintUpdate {
-  id: string;
-  updateType: string;
   message: string;
   createdAt: string;
 }
@@ -18,11 +17,9 @@ export interface PublicComplaintUpdate {
 export interface PublicComplaintDetails {
   trackingNumber: string;
   status: string;
-  privacyType: string;
-  subject: string;
-  incidentDate: string;
+  category: string;
   createdAt: string;
-  slaStatus: string;
+  updatedAt: string;
   updates: PublicComplaintUpdate[];
 }
 
@@ -66,7 +63,7 @@ export async function verifyTrackingCredentialsAction(
     // 3. Lookup Complaint by tracking_number (Airgapped from PII and internal notes)
     const { data: complaint, error } = await admin
       .from('complaints')
-      .select('id, tracking_number, tracking_hash, status, privacy_type, subject, incident_date, created_at, sla_status')
+      .select('id, tracking_number, tracking_hash, status, created_at, updated_at, complaint_categories(name)')
       .eq('tracking_number', input.trackingNumber.toUpperCase())
       .single();
 
@@ -94,28 +91,28 @@ export async function verifyTrackingCredentialsAction(
     // 6. Fetch Approved Public Updates Only (AIRGAP: Never fetch internal_notes)
     const { data: updates } = await admin
       .from('complaint_updates')
-      .select('id, update_type, message, created_at')
+      .select('message, created_at')
       .eq('complaint_id', complaint.id)
       .eq('is_public', true)
       .order('created_at', { ascending: true });
 
     const publicUpdates: PublicComplaintUpdate[] = (updates || []).map((u) => ({
-      id: u.id,
-      updateType: u.update_type,
       message: u.message,
       createdAt: u.created_at,
     }));
+
+    const category = Array.isArray(complaint.complaint_categories)
+      ? complaint.complaint_categories[0]
+      : complaint.complaint_categories;
 
     return {
       success: true,
       data: {
         trackingNumber: complaint.tracking_number,
-        status: complaint.status,
-        privacyType: complaint.privacy_type,
-        subject: complaint.subject,
-        incidentDate: complaint.incident_date,
+        status: toPublicStatus(complaint.status),
+        category: category?.name ?? 'General',
         createdAt: complaint.created_at,
-        slaStatus: complaint.sla_status,
+        updatedAt: complaint.updated_at,
         updates: publicUpdates,
       },
     };
